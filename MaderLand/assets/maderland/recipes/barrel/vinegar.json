@@ -1,0 +1,36 @@
+[
+  {
+    "code": "vinegar",
+    "sealHours": 120,
+    "ingredients": [
+      {
+        "type": "item",
+        "code": "game:wineportion-*",
+        "litres": 0.01,
+        "consumeLitres": 0.01
+      }
+    ],
+    "output": {
+      "type": "item",
+      "code": "game:vinegarportion",
+      "litres": 0.01
+    }
+  },
+  {
+    "code": "vinegar",
+    "sealHours": 120,
+    "ingredients": [
+      {
+        "type": "item",
+        "code": "game:ciderportion-*",
+        "litres": 0.01,
+        "consumeLitres": 0.01
+      }
+    ],
+    "output": {
+      "type": "item",
+      "code": "game:vinegarportion",
+      "litres": 0.01
+    }
+  }
+]

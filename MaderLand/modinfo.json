@@ -1,0 +1,14 @@
+{
+    "$schema": "https://moddbcdn.vintagestory.at/schema/modinfo.latest.json",
+    "type": "Code",
+    "modid": "maderland",
+    "name": "MaderLand",
+    "authors": [
+        "Mader Levap"
+    ],
+    "description": "Customization for my private world.",
+    "version": "0.0.2",
+    "dependencies": {
+        "game": "1.22.3"
+    }
+}

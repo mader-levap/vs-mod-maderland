@@ -1,0 +1,24 @@
+{
+  "code": "aged-log",
+  "sealHours": 336,
+  "ingredients": [
+    {
+      "type": "item",
+      "code": "game:vinegarportion",
+      "litres": 2,
+      "consumeLitres": 2
+    },
+    {
+      "type": "block",
+      "code": "game:log-placed-*-ud",
+	  "name": "wood",
+      "skipVariants": [ "aged" ],
+      "quantity": 1
+    }
+  ],
+  "output": {
+    "type": "block",
+    "code": "game:log-placed-aged-ud",
+    "quantity": 1
+  }
+}
