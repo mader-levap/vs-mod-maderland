@@ -1,6 +1,6 @@
 # MaderLand
 
-A Vintage Story personal mod adding various features and tweaks to base game that I like. All features can be activated on individual basis.
+A Vintage Story personal mod that adds various features and tweaks to base game that I like. All features can be activated on individual basis.
 
 ## Features
 
@@ -9,12 +9,12 @@ A Vintage Story personal mod adding various features and tweaks to base game tha
 ## Other changes
 
 - **Aged logs** - Gives you additional two recipes:
-  - You can make vinegar by sealing any wine/cider in barrel for 5 days.
-  - You can make aged logs by sealing any log (except aged) in barrel with vinegar for 14 days. Uses up 2 liters of vinegar per log.
+  - You can make **vinegar** by sealing any wine/cider in barrel for 5 days.
+  - You can make **aged logs** by sealing any log (except aged) in barrel with vinegar for 14 days. Uses up 2 liters of vinegar per log.
 
 ## Requirements
 
-- Vintage Story 1.22.3
+- **Vintage Story** 1.22.3
 
 ## Installation
 

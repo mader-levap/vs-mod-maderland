@@ -13,7 +13,7 @@ public class TrailsConfig
     public bool Active { get; set; } = true;
 
     /// <summary>
-    /// Trampling.
+    /// Trampling data.
     /// </summary>
     public TrailsTrample Trample { get; set; } = new TrailsTrample();
 

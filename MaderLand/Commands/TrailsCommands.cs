@@ -16,25 +16,30 @@ public static class TrailsCommands
     /// </summary>
     /// <param name="api">Core API.</param>
     /// <param name="player">Player that issued command.</param>
+    /// <param name="action">Action (feature-specific) to use.</param>
     /// <param name="parameters">All other parameters.</param>
-    public static TextCommandResult Handle(ICoreServerAPI api, IServerPlayer player, string? parameters)
+    public static TextCommandResult Handle(ICoreServerAPI api, IServerPlayer player, string action, string? parameters)
     {
-        if (parameters == null) return TextCommandResult.Error($"Command 'trail': missing parameters!");
-        if (parameters.StartsWith("active")) return Active(api, player, parameters.Replace("active", "").Trim());
-        if (parameters.StartsWith("check")) return CheckBlock(player);
-        return TextCommandResult.Success();
+        switch (action)
+        {
+            case "active": return Active(api, player, parameters);
+            case "check": return CheckBlock(player);
+            default:
+                return TextCommandResult.Error($"Unknown action '{action}' for feature 'trails'!");
+        }
     }
 
     /// <summary>
-    /// Activates or deactivates Trails feature.
+    /// Action: Activates or deactivates Trails feature.
     /// </summary>
     /// <param name="api">Core API.</param>
     /// <param name="player"></param>
     /// <param name="parameters">All other parameters.</param>
     /// <returns>Result of command.</returns>
-    private static TextCommandResult Active(ICoreServerAPI api, IServerPlayer player, string parameters)
+    private static TextCommandResult Active(ICoreServerAPI api, IServerPlayer player, string? parameters)
     {
-        if (parameters.Equals("")) {
+        if (parameters == null || parameters.Equals(""))
+        {
             // Just flip.
             ConfigService.TrailsConfig.Active = !ConfigService.TrailsConfig.Active;
         } else if (parameters.Equals("on")) {
@@ -53,7 +58,7 @@ public static class TrailsCommands
             }
             ConfigService.TrailsConfig.Active = false;
         }
-        else return TextCommandResult.Error($"Command 'trail active': unknown parameter!");
+        else return TextCommandResult.Error($"Command '/ml trails active': unknown parameter '{parameters}'!");
 
         TrailsConfigHandler.Save(api);
         string message = "Trails feature is turned " + (ConfigService.TrailsConfig.Active ? "on" : "off") + ".";
@@ -62,7 +67,7 @@ public static class TrailsCommands
     }
 
     /// <summary>
-    /// Check code of block player is standing on.
+    /// Action: Check code of block player is standing on.
     /// </summary>
     /// <param name="player">Player that input this command.</param>
     /// <returns>Result of command.</returns>
@@ -74,5 +79,4 @@ public static class TrailsCommands
         player.SendMessage(GlobalConstants.GeneralChatGroup, message, EnumChatType.CommandSuccess);
         return TextCommandResult.Success();
     }
-
 }
