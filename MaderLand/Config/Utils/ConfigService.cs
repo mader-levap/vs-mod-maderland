@@ -16,7 +16,7 @@ public class ConfigService
     /// <summary>
     /// Configuration for Trails feature.
     /// </summary>
-    public static TrailsConfig TrailsConfig { get; private set; } = new();
+    public static TrailsCfg TrailsConfig { get; private set; } = new();
 
     /// <summary>
     /// Load all configuration files.

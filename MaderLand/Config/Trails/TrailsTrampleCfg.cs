@@ -3,7 +3,7 @@
 /// <summary>
 /// Contains trampling data.
 /// </summary>
-public class TrailsTrample
+public class TrailsTrampleCfg
 {
     /// <summary>
     /// How powerful is walking barefoot. Note: completely destroyed shoes/boots count as barefoot.

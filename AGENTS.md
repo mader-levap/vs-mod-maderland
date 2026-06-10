@@ -27,6 +27,8 @@ Use these resources if you are not sure about particulars of API.
 MaderLand/
 ├─ Commands/                    # Contains command /ml (short for maderland) and its subcommands for every feature
 ├─ Config/                      # Utilities and config definitions for every feature
+├─ Systems/                     # ModSystems for every feature: high-level, timers, game event subscriptions etc.
+├─ Utils/                       # Common utility classes
 ├─ MaderLandModSystem.cs        # Main ModSystem entry point
 ├─ assets/
 │   └─ maderland/               # JSON assets, lang files
@@ -52,4 +54,5 @@ MaderLand/
 
 ## Do Not
 
+- Do not handle unrelated TODO code, unless explicitly asked for.
 - Do not hardcode block codes or gameplay values — put them in config.

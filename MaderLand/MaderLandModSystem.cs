@@ -11,7 +11,6 @@ namespace MaderLand;
 /// </summary>
 public class MaderLandModSystem : ModSystem
 {
-
     /// <summary>
     /// Initialization common for both server and client.
     /// </summary>

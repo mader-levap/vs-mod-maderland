@@ -2,6 +2,7 @@
 using MaderLand.Config.Utils;
 using Vintagestory.API.Common;
 using Vintagestory.API.Config;
+using Vintagestory.API.MathTools;
 using Vintagestory.API.Server;
 
 namespace MaderLand.Commands;
@@ -73,8 +74,18 @@ public static class TrailsCommands
     /// <returns>Result of command.</returns>
     private static TextCommandResult CheckBlock(IServerPlayer player)
     {
-        // TODO: check code of block player is standing on.
-        string message = "Here will be message about block you are standing on.";
+        // Get the player's current block position (feet level).
+        BlockPos playerPos = player.Entity.Pos.AsBlockPos;
+        
+        // Get the position directly beneath the player's feet.
+        // Use DownCopy() instead of Down() to avoid mutating the player's actual position object
+        BlockPos standingOnPos = playerPos.DownCopy();
+
+        // Get the block instance from the world.
+        Block standingOnBlock = player.Entity.World.BlockAccessor.GetBlock(standingOnPos);
+
+        // Construct the message with the block's code (e.g., game:dirt).
+        string message = $"You are standing on: {standingOnBlock.Code} (ID: {standingOnBlock.Id})";
 
         player.SendMessage(GlobalConstants.GeneralChatGroup, message, EnumChatType.CommandSuccess);
         return TextCommandResult.Success();

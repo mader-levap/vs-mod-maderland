@@ -13,7 +13,7 @@ public class TrailsConfigHandler
     /// </summary>
     public const string ConfigPath = "maderland/trails.json";
 
-    public static TrailsConfig Load(ICoreAPI api) => ModConfigHandler.Load<TrailsConfig>(api, ConfigPath);
+    public static TrailsCfg Load(ICoreAPI api) => ModConfigHandler.Load<TrailsCfg>(api, ConfigPath);
 
     /// <summary>
     /// Save configuration for Trails feature.
