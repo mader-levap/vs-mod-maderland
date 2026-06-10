@@ -1,12 +1,8 @@
 using MaderLand.Config.Trails;
 using MaderLand.Config.Utils;
 using MaderLand.Systems.Trails.Data;
-using System;
 using System.Collections.Generic;
-using System.Data;
-using System.Threading;
 using Vintagestory.API.Common;
-using Vintagestory.API.Config;
 using Vintagestory.API.MathTools;
 using Vintagestory.API.Server;
 using Vintagestory.API.Util;
@@ -15,16 +11,15 @@ namespace MaderLand.Systems.Trails;
 
 /// <summary>
 /// Handles the trails feature logic, including player movement detection and block updates.
-/// TODO besides other TODOs, handle edge cases like someone removing/placing blocks, animals eating grass etc. BlockTrampleData must be properly removed in these cases.
 /// </summary>
 public class TrailsSystem : ModSystem
 {
-    private ICoreServerAPI api;
+    private ICoreServerAPI? api;
 
     /// <summary>
     /// Map of all player positions. Key is PlayerUID, Value is block position.
     /// </summary>
-    private readonly Dictionary<string, BlockPos> lastPlayerPositions = new();
+    private readonly Dictionary<string, BlockPos> lastPlayerPositions = [];
 
     /// <summary>
     /// Returns if the mod system should be loaded on the server.
@@ -60,6 +55,31 @@ public class TrailsSystem : ModSystem
         lastPlayerPositions.Remove(player.PlayerUID);
     }
 
+    //
+
+    /// <summary>
+    /// Registers a cleanup behavior to all blocks that can be trampled.
+    /// This ensures trample data is removed if the block is broken, replaced, or eaten by animals.
+    /// </summary>
+    public override void AssetsFinalize(ICoreAPI api)
+    {
+        base.AssetsFinalize(api);
+        if (ConfigService.TrailsConfig?.Blocks == null) return;
+
+        string message = $"[Trails] AssetsFinalize: will add behavior to handled block types.";
+        api.Logger.Notification(message); // DEBUG
+
+        foreach (var blockCode in ConfigService.TrailsConfig.Blocks.Keys)
+        {
+            // Add cleanup behavior to blocks that can be trampled.
+            AssetLocation loc = new(blockCode);
+            Block? block = api.World.GetBlock(loc);
+            block?.BlockBehaviors = block.BlockBehaviors.Append(new TrampleCleanupBehavior(this, block));
+        }
+    }
+
+    // ////////////////////////////////////////////////////////////////////////
+
     /// <summary>
     /// Triggered every 100ms on the server to update and detect player position changes.
     /// </summary>
@@ -70,9 +90,9 @@ public class TrailsSystem : ModSystem
         if (api == null || !ConfigService.TrailsConfig.Active) return;
 
         // Go over all players...
-        foreach (IServerPlayer player in api.World.AllOnlinePlayers)
+        foreach (IPlayer player in api.World.AllOnlinePlayers)
         {
-            CheckPlayerMove(player);
+            CheckPlayerMove((IServerPlayer)player);
         }
     }
 
@@ -104,14 +124,16 @@ public class TrailsSystem : ModSystem
     }
 
     /// <summary>
-    /// Check if we can use player for trails logic. For example, we only want to detect players in survival mode, not flying players etc.
+    /// Check if we can use player for trails logic.
+    /// We only want to detect players in survival mode who are on the ground.
     /// </summary>
-    /// <param name="player"></param>
-    /// <returns></returns>
-    private Boolean CanUsePlayer(IServerPlayer player)
+    /// <param name="player">The player to check.</param>
+    /// <returns>True if the player can trample blocks.</returns>
+    private static bool CanUsePlayer(IServerPlayer player)
     {
         if (player.ConnectionState != EnumClientState.Playing) return false;
         if (player.WorldData.CurrentGameMode != EnumGameMode.Survival) return false;
+
         if (!player.Entity.OnGround) return false;
         return true;
     }
@@ -131,9 +153,9 @@ public class TrailsSystem : ModSystem
         api.Logger.Notification(message); // DEBUG
 
         // We can trample grass and similar stuff that can be walked through by players.
-        bool result = tryTrampleBlock(blockPlayer, posPlayer);
+        bool result = TryTrampleBlock(blockPlayer, posPlayer);
         // If result is ok (like grass fully trampled), try to trample block under player.
-        if (result) tryTrampleBlock(blockUnder, posUnder);
+        if (result) TryTrampleBlock(blockUnder, posUnder);
     }
 
     //
@@ -145,20 +167,20 @@ public class TrailsSystem : ModSystem
     /// <param name="block">Block data.</param>
     /// <param name="pos">Position of block.</param>
     /// <returns>True if no trample needed, otherwise false.</returns>
-    private bool tryTrampleBlock(Block block, BlockPos pos)
+    private bool TryTrampleBlock(Block block, BlockPos pos)
     {
-        TrailsBlockCfg? trailsBlockCfg = canTrampleOnBlock(block);
+        TrailsBlockCfg? trailsBlockCfg = CanTrampleOnBlock(block);
         if (trailsBlockCfg == null) return true;
 
         IServerChunk chunk = api.WorldManager.GetChunk(pos);
         if (chunk == null) return true;
 
-        ChunkTrampleData chunkTrampleData = loadChunkTrampleData(chunk);
-        BlockTrampleData blockTrampleData = resolveBlockTrampleData(trailsBlockCfg, chunkTrampleData, pos);
+        ChunkTrampleData chunkTrampleData = LoadChunkTrampleData(chunk);
+        BlockTrampleData blockTrampleData = ResolveBlockTrampleData(trailsBlockCfg, chunkTrampleData, pos);
 
-        trampleBlock(trailsBlockCfg, chunkTrampleData, blockTrampleData, block, pos);
+        TrampleBlock(trailsBlockCfg, blockTrampleData, block, pos);
 
-        saveChunkTrampleData(chunk, chunkTrampleData);
+        SaveChunkTrampleData(chunk, chunkTrampleData);
         return true;
     }
 
@@ -167,7 +189,7 @@ public class TrailsSystem : ModSystem
     /// </summary>
     /// <param name="block">Block data.</param>
     /// <returns>Trails config data for given block or null if block cannot be trampled.</returns>
-    private TrailsBlockCfg? canTrampleOnBlock(Block block)
+    private static TrailsBlockCfg? CanTrampleOnBlock(Block block)
     {
         ConfigService.TrailsConfig.Blocks.TryGetValue(block.Code.ToString(), out TrailsBlockCfg? trailsBlockCfg);
         return trailsBlockCfg;
@@ -177,30 +199,31 @@ public class TrailsSystem : ModSystem
     /// Actually trample block.
     /// </summary>
     /// <param name="trailsBlockCfg">Trample configuration for this block.</param>
-    /// <param name="chunkTrampleData">Trample data for given chunk.</param>
     /// <param name="blockTrampleData">Trample data for given block.</param>
     /// <param name="block">Block data.</param>
     /// <param name="pos">Position of block.</param>
-    private void trampleBlock(TrailsBlockCfg trailsBlockCfg, ChunkTrampleData chunkTrampleData, BlockTrampleData blockTrampleData, Block block, BlockPos pos)
+    private void TrampleBlock(TrailsBlockCfg trailsBlockCfg, BlockTrampleData blockTrampleData, Block block, BlockPos pos)
     {
         // Trample this block.
-        blockTrampleData.Durability -= resolveTramplePower();
+        blockTrampleData.Durability -= ResolveTramplePower();
 
         string message = $"[Trails] Block '{block.Code}' at {pos} was trampled. Durability: {blockTrampleData.Durability}.";
         api.Logger.Notification(message); // DEBUG
 
         if (blockTrampleData.Durability <= 0f)
         {
-            Block? nextBlock = resolveNextBlock(trailsBlockCfg, block, pos);
+            Block? nextBlock = ResolveNextBlock(trailsBlockCfg, block, pos);
             if (nextBlock == null) return;
 
             // Replace current block with next block.
             api.World.BlockAccessor.SetBlock(nextBlock.BlockId, pos);
             api.World.BlockAccessor.MarkBlockDirty(pos);
 
+            // We don't need to cleanup as it is now handled by the TrampleCleanupBehavior attached to the block.
+
             // Cleanup: remove trample data for this block since it's now a different block.
-            int localIndex = MapUtil.Index3d(pos.X & 31, pos.Y & 31, pos.Z & 31, 32, 32);
-            chunkTrampleData.Blocks.Remove(localIndex);
+            //int localIndex = MapUtil.Index3d(pos.X & 31, pos.Y & 31, pos.Z & 31, 32, 32);
+            //chunkTrampleData.Blocks.Remove(localIndex);
 
             string message1 = $"[Trails] Block '{block.Code}' at {pos} become fully trampled and replaced with '{nextBlock.Code}'.";
             api.Logger.Notification(message1); // DEBUG
@@ -208,10 +231,28 @@ public class TrailsSystem : ModSystem
     }
 
     /// <summary>
+    /// Removes trample data for a specific block position.
+    /// </summary>
+    public void RemoveTrampleData(BlockPos pos)
+    {
+        IServerChunk chunk = api.WorldManager.GetChunk(pos);
+        if (chunk == null) return;
+
+        ChunkTrampleData trampleData = LoadChunkTrampleData(chunk);
+        int localIndex = MapUtil.Index3d(pos.X & 31, pos.Y & 31, pos.Z & 31, 32, 32);
+
+        if (trampleData.Blocks.Remove(localIndex))
+        {
+            SaveChunkTrampleData(chunk, trampleData);
+            api.Logger.Notification($"[Trails] Cleared trample data at {pos} due to block removal or change."); // DEBUG
+        }
+    }
+
+    /// <summary>
     /// Resolve trample power.
     /// </summary>
     /// <returns>Trample power.</returns>
-    private float resolveTramplePower()
+    private static float ResolveTramplePower()
     {
         TrailsTrampleCfg Trample = ConfigService.TrailsConfig.Trample;
         // TODO actually resolve trampling power of player, for now just assume everyone is barefoot and has same trample power.
@@ -226,19 +267,17 @@ public class TrailsSystem : ModSystem
     /// <param name="trailsBlockCfg">Config data about current block.</param>
     /// <param name="block">Block data.</param>
     /// <param name="pos">Position of block.</param>
-    /// <returns></returns>
-    private Block? resolveNextBlock(TrailsBlockCfg trailsBlockCfg, Block block, BlockPos pos)
+    /// <returns>Next block to use or null if failed to find next block.</returns>
+    private Block? ResolveNextBlock(TrailsBlockCfg trailsBlockCfg, Block block, BlockPos pos)
     {
-        string ToBlockCode = trailsBlockCfg.ToBlockCode;
-        if (ToBlockCode == "") ToBlockCode = TrailsConst.emptyBlock;
+        string toBlockCode = trailsBlockCfg.ToBlockCode;
+        if (toBlockCode == "") toBlockCode = TrailsConst.emptyBlock;
 
-        AssetLocation loc = new AssetLocation(ToBlockCode);
+        AssetLocation loc = new(toBlockCode);
         Block? nextBlock = api.World.GetBlock(loc);
         if (nextBlock == null)
-        {
-            api.Logger.Error($"[Trails] Failed to get block with code '{ToBlockCode}' when trying to trample block '{block.Code}' at {pos}. Make sure the block code in config is correct.");
-            return null;
-        }
+            api.Logger.Error($"[Trails] Failed to get block with code '{toBlockCode}' when trying to trample block '{block.Code}' at {pos}. Make sure the block code in config is correct.");
+
         return nextBlock;
     }
 
@@ -249,7 +288,7 @@ public class TrailsSystem : ModSystem
     /// </summary>
     /// <param name="chunk">Chunk.</param>
     /// <returns>Trample data.</returns>
-    private ChunkTrampleData loadChunkTrampleData(IServerChunk chunk)
+    private static ChunkTrampleData LoadChunkTrampleData(IServerChunk chunk)
     {
         ChunkTrampleData trampleData;
         // Try to get existing data, otherwise initialize a new one.
@@ -272,13 +311,13 @@ public class TrailsSystem : ModSystem
     /// <param name="chunkTrampleData">Trample data for given chunk.</param>
     /// <param name="pos">Position of block.</param>
     /// <returns>Trample data for given block.</returns>
-    private BlockTrampleData resolveBlockTrampleData(TrailsBlockCfg trailsBlockCfg, ChunkTrampleData chunkTrampleData, BlockPos pos)
+    private static BlockTrampleData ResolveBlockTrampleData(TrailsBlockCfg trailsBlockCfg, ChunkTrampleData chunkTrampleData, BlockPos pos)
     {
         int localIndex = MapUtil.Index3d(pos.X & 31, pos.Y & 31, pos.Z & 31, 32, 32);
         if (!chunkTrampleData.Blocks.TryGetValue(localIndex, out BlockTrampleData? blockTrampleData))
         {
             // No existing trample data for this block, create new one and save to chunk data.
-            blockTrampleData = createBlockTrampleData(trailsBlockCfg);
+            blockTrampleData = CreateBlockTrampleData(trailsBlockCfg);
             chunkTrampleData.Blocks[localIndex] = blockTrampleData;
         }
         return blockTrampleData;
@@ -289,9 +328,9 @@ public class TrailsSystem : ModSystem
     /// </summary>
     /// <param name="trailsBlockCfg">Config data about current block.</param>
     /// <returns>New trample data for given block.</returns>
-    private BlockTrampleData createBlockTrampleData(TrailsBlockCfg trailsBlockCfg)
+    private static BlockTrampleData CreateBlockTrampleData(TrailsBlockCfg trailsBlockCfg)
     {
-        BlockTrampleData blockTrampleData = new BlockTrampleData();
+        BlockTrampleData blockTrampleData = new();
         blockTrampleData.Durability = trailsBlockCfg.Durability;
         return blockTrampleData;
     }
@@ -301,13 +340,13 @@ public class TrailsSystem : ModSystem
     /// </summary>
     /// <param name="chunk">Chunk.</param>
     /// <param name="chunkTrampleData">Trample data for given chunk.</param>
-    private void saveChunkTrampleData(IServerChunk chunk, ChunkTrampleData chunkTrampleData)
+    private static void SaveChunkTrampleData(IServerChunk chunk, ChunkTrampleData chunkTrampleData)
     {
         // Serialize and save back to chunk.
         byte[] serializedBytes = SerializerUtil.Serialize(chunkTrampleData);
         chunk.SetServerModdata(TrailsConst.trampleDataKey, serializedBytes);
 
-        // Mark the chunk dirty so the save system knows to write it to disk
+        // Mark the chunk dirty so the save system knows to write it to disk.
         chunk.MarkModified();
     }
 }
