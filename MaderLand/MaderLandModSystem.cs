@@ -19,8 +19,6 @@ public class MaderLandModSystem : ModSystem
     {
         base.Start(api);
         ConfigService.LoadAll(api);
-
-        Mod.Logger.Notification($"MaderLand mod initialized. TrailsConfig.Active: {ConfigService.TrailsConfig.Active}");
     }
 
     /// <summary>
@@ -30,7 +28,6 @@ public class MaderLandModSystem : ModSystem
     public override void StartServerSide(ICoreServerAPI api)
     {
         MaderLandCommand.Register(api);
-        Mod.Logger.Notification("MaderLand mod, server side initialized.");
     }
 
     /// <summary>
@@ -39,6 +36,5 @@ public class MaderLandModSystem : ModSystem
     /// <param name="api">Core client API.</param>
     public override void StartClientSide(ICoreClientAPI api)
     {
-        Mod.Logger.Notification("MaderLand mod, client side initialized.");
     }
 }
