@@ -1,6 +1,7 @@
 using MaderLand.Config.Trails;
 using MaderLand.Config.Utils;
 using MaderLand.Systems.Trails.Data;
+using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Threading;
@@ -44,7 +45,7 @@ public class TrailsSystem : ModSystem
         base.StartServerSide(serverApi);
         api = serverApi;
 
-        // Register game tick listener running every 100ms
+        // Register game tick listener running every 100ms.
         api.Event.RegisterGameTickListener(OnGameTick, 100);
         api.Event.PlayerLeave += OnPlayerGone;
         api.Event.PlayerDisconnect += OnPlayerGone;
@@ -71,7 +72,7 @@ public class TrailsSystem : ModSystem
         // Go over all players...
         foreach (IServerPlayer player in api.World.AllOnlinePlayers)
         {
-            CheckPlayer(player);
+            CheckPlayerMove(player);
         }
     }
 
@@ -79,10 +80,10 @@ public class TrailsSystem : ModSystem
     /// Check given player for walking onto new block.
     /// </summary>
     /// <param name="player">Player to check.</param>
-    private void CheckPlayer(IServerPlayer player)
+    private void CheckPlayerMove(IServerPlayer player)
     {
-        // Only detect when the player is a loaded entity and standing on the ground
-        if (player.Entity is not EntityPlayer entityPlayer || !entityPlayer.OnGround) return;
+        if (player.Entity is not EntityPlayer entityPlayer) return;
+        if (!CanUsePlayer(player)) return;
 
         BlockPos currentPos = entityPlayer.Pos.AsBlockPos;
 
@@ -103,6 +104,19 @@ public class TrailsSystem : ModSystem
     }
 
     /// <summary>
+    /// Check if we can use player for trails logic. For example, we only want to detect players in survival mode, not flying players etc.
+    /// </summary>
+    /// <param name="player"></param>
+    /// <returns></returns>
+    private Boolean CanUsePlayer(IServerPlayer player)
+    {
+        if (player.ConnectionState != EnumClientState.Playing) return false;
+        if (player.WorldData.CurrentGameMode != EnumGameMode.Survival) return false;
+        if (!player.Entity.OnGround) return false;
+        return true;
+    }
+
+    /// <summary>
     /// Triggered when a player moves onto a new block position.
     /// </summary>
     /// <param name="player">The player who moved.</param>
@@ -120,7 +134,6 @@ public class TrailsSystem : ModSystem
         bool result = tryTrampleBlock(blockPlayer, posPlayer);
         // If result is ok (like grass fully trampled), try to trample block under player.
         if (result) tryTrampleBlock(blockUnder, posUnder);
-
     }
 
     //
@@ -264,8 +277,9 @@ public class TrailsSystem : ModSystem
         int localIndex = MapUtil.Index3d(pos.X & 31, pos.Y & 31, pos.Z & 31, 32, 32);
         if (!chunkTrampleData.Blocks.TryGetValue(localIndex, out BlockTrampleData? blockTrampleData))
         {
+            // No existing trample data for this block, create new one and save to chunk data.
             blockTrampleData = createBlockTrampleData(trailsBlockCfg);
-            chunkTrampleData.Blocks[localIndex] = blockTrampleData; // save to chunk data
+            chunkTrampleData.Blocks[localIndex] = blockTrampleData;
         }
         return blockTrampleData;
     }
@@ -295,7 +309,5 @@ public class TrailsSystem : ModSystem
 
         // Mark the chunk dirty so the save system knows to write it to disk
         chunk.MarkModified();
-
-        // TODO surely there is more efficient way to do it? Players walk on blocks all the time, so we must find better way, we can't (de)serialize stuff all the time.
     }
 }
