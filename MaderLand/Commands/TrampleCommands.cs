@@ -1,4 +1,4 @@
-﻿using MaderLand.Config.Trails;
+﻿using MaderLand.Config.Trample;
 using MaderLand.Config.Utils;
 using Vintagestory.API.Common;
 using Vintagestory.API.Config;
@@ -8,12 +8,12 @@ using Vintagestory.API.Server;
 namespace MaderLand.Commands;
 
 /// <summary>
-/// Handles 'trails' subcommand.
+/// Handles 'trample' subcommand.
 /// </summary>
-public static class TrailsCommands
+public static class TrampleCommands
 {
     /// <summary>
-    /// Handle trail-specific command.
+    /// Handle trample-specific command.
     /// </summary>
     /// <param name="api">Core API.</param>
     /// <param name="player">Player that issued command.</param>
@@ -26,12 +26,12 @@ public static class TrailsCommands
             case "active": return Active(api, player, parameters);
             case "check": return CheckBlock(player);
             default:
-                return TextCommandResult.Error($"Unknown action '{action}' for feature 'trails'!");
+                return TextCommandResult.Error($"Unknown action '{action}' for feature 'trample'!");
         }
     }
 
     /// <summary>
-    /// Action: Activates or deactivates Trails feature.
+    /// Action: Activates or deactivates Trample feature.
     /// </summary>
     /// <param name="api">Core API.</param>
     /// <param name="player"></param>
@@ -42,27 +42,27 @@ public static class TrailsCommands
         if (parameters == null || parameters.Equals(""))
         {
             // Just flip.
-            ConfigService.TrailsConfig.Active = !ConfigService.TrailsConfig.Active;
+            ConfigService.TrampleConfig.Active = !ConfigService.TrampleConfig.Active;
         } else if (parameters.Equals("on")) {
-            if (ConfigService.TrailsConfig.Active)
+            if (ConfigService.TrampleConfig.Active)
             {
-                player.SendMessage(GlobalConstants.GeneralChatGroup, "Trails feature is already active!", EnumChatType.CommandSuccess);
+                player.SendMessage(GlobalConstants.GeneralChatGroup, "Trample feature is already active!", EnumChatType.CommandSuccess);
                 return TextCommandResult.Success();
             }
-            ConfigService.TrailsConfig.Active = true;
+            ConfigService.TrampleConfig.Active = true;
         } else if (parameters.Equals("off"))
         {
-            if (!ConfigService.TrailsConfig.Active)
+            if (!ConfigService.TrampleConfig.Active)
             {
-                player.SendMessage(GlobalConstants.GeneralChatGroup, "Trails feature is already inactive!", EnumChatType.CommandSuccess);
+                player.SendMessage(GlobalConstants.GeneralChatGroup, "Trample feature is already inactive!", EnumChatType.CommandSuccess);
                 return TextCommandResult.Success();
             }
-            ConfigService.TrailsConfig.Active = false;
+            ConfigService.TrampleConfig.Active = false;
         }
-        else return TextCommandResult.Error($"Command '/ml trails active': unknown parameter '{parameters}'!");
+        else return TextCommandResult.Error($"Command '/ml trample active': unknown parameter '{parameters}'!");
 
-        TrailsConfigHandler.Save(api);
-        string message = "Trails feature is turned " + (ConfigService.TrailsConfig.Active ? "on" : "off") + ".";
+        TrampleConfigHandler.Save(api);
+        string message = "Trample feature is turned " + (ConfigService.TrampleConfig.Active ? "on" : "off") + ".";
         player.SendMessage(GlobalConstants.GeneralChatGroup, message, EnumChatType.CommandSuccess);
         return TextCommandResult.Success();
     }

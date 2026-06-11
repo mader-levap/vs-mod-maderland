@@ -1,6 +1,6 @@
 ﻿using ProtoBuf;
 
-namespace MaderLand.Systems.Trails.Data;
+namespace MaderLand.Systems.Trample.Data;
 
 /// <summary>
 /// Trample data for single block.

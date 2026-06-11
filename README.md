@@ -4,7 +4,7 @@ A Vintage Story personal mod that adds various features and tweaks to base game 
 
 ## Features
 
-- **Trails** — Blocks change over time when walked on, creating natural paths.
+- **Trample** — Blocks change over time when walked on, creating natural paths and trails.
 
 ## Other changes
 

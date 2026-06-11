@@ -2,12 +2,12 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace MaderLand.Systems.Trails;
+namespace MaderLand.Systems.Trample;
 
 /// <summary>
-/// Constants for Trails feature.
+/// Constants for Trample feature.
 /// </summary>
-public static class TrailsConst
+public static class TrampleConst
 {
     /// <summary>
     /// The unique data key used to store trample data in chunk mod data.

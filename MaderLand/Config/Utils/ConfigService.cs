@@ -1,5 +1,5 @@
 ﻿using MaderLand.Config.MaderLand;
-using MaderLand.Config.Trails;
+using MaderLand.Config.Trample;
 using Vintagestory.API.Common;
 
 namespace MaderLand.Config.Utils;
@@ -14,9 +14,9 @@ public class ConfigService
     /// </summary>
     public static MaderLandConfig MaderLandConfig { get; private set; } = new();
     /// <summary>
-    /// Configuration for Trails feature.
+    /// Configuration for Trample feature.
     /// </summary>
-    public static TrailsCfg TrailsConfig { get; private set; } = new();
+    public static TrampleCfg TrampleConfig { get; private set; } = new();
 
     /// <summary>
     /// Load all configuration files.
@@ -25,7 +25,7 @@ public class ConfigService
     public static void LoadAll(ICoreAPI api)
     {
         MaderLandConfig = MaderLandConfigHandler.Load(api);
-        TrailsConfig = TrailsConfigHandler.Load(api);
+        TrampleConfig = TrampleConfigHandler.Load(api);
     }
 
     /// <summary>
@@ -35,6 +35,6 @@ public class ConfigService
     public static void SaveAll(ICoreAPI api)
     {
         MaderLandConfigHandler.Save(api);
-        TrailsConfigHandler.Save(api);
+        TrampleConfigHandler.Save(api);
     }
 }

@@ -48,7 +48,7 @@ public static class MaderLandCommand
     {
         switch (feature)
         {
-            case "trails": return TrailsCommands.Handle(api, player, action, parameters);
+            case "trample": return TrampleCommands.Handle(api, player, action, parameters);
             default:
                 return TextCommandResult.Error($"Unknown feature '{feature}'!");
         }

@@ -1,9 +1,9 @@
-﻿namespace MaderLand.Config.Trails;
+﻿namespace MaderLand.Config.Trample;
 
 /// <summary>
-/// Contains trampling data.
+/// Contains trampling power data.
 /// </summary>
-public class TrailsTrampleCfg
+public class TramplePowerCfg
 {
     /// <summary>
     /// How powerful is walking barefoot. Note: completely destroyed shoes/boots count as barefoot.

@@ -1,12 +1,12 @@
 ﻿using Vintagestory.API.Common;
 using Vintagestory.API.MathTools;
 
-namespace MaderLand.Systems.Trails;
+namespace MaderLand.Systems.Trample;
 
 /// <summary>
 /// A block behavior that automatically removes trample data when the block is removed or replaced.
 /// </summary>
-public class TrampleCleanupBehavior(TrailsSystem trailsSystem, Block block) : BlockBehavior(block)
+public class TrampleCleanupBehavior(TrampleSystem trampleSystem, Block block) : BlockBehavior(block)
 {
     /// <summary>
     /// When the block is removed from this position (broken, replaced, etc.), we must clear any trample data stored for it.
@@ -18,10 +18,10 @@ public class TrampleCleanupBehavior(TrailsSystem trailsSystem, Block block) : Bl
     /// <param name="handling">Handling of behavior.</param>
     public override void OnBlockRemoved(IWorldAccessor world, BlockPos pos, ref EnumHandling handling)
     {
-        trailsSystem.RemoveTrampleData(pos);
+        trampleSystem.RemoveTrampleData(pos);
         base.OnBlockRemoved(world, pos, ref handling);
 
-        string message = $"[Trails] Block '{block.Code}' at {pos} was removed. Cleaned any trampling data.";
+        string message = $"[Trample] Block '{block.Code}' at {pos} was removed. Cleaned any trampling data.";
         world.Logger.Notification(message); // DEBUG
     }
 }
