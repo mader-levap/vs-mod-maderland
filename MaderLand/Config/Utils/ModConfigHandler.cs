@@ -14,23 +14,25 @@ public class ModConfigHandler
     /// <typeparam name="T">Config class type.</typeparam>
     /// <param name="api">Core API.</param>
     /// <param name="configPath">Relative config path, for example "maderland/trample.json".</param>
+    /// <param name="defaultConfig">Default config data to use if config file is missing. Can be null, in this case will initialize T on its own.</param>
     /// <returns>The loaded config, or a default instance if loading failed or file did not exist.</returns>
-    public static T Load<T>(ICoreAPI api, string configPath) where T : new()
+    public static T Load<T>(ICoreAPI api, string configPath, T? defaultConfig) where T : new()
     {
         try
         {
+            // If file is missing, will return null.
             T loadedConfig = api.LoadModConfig<T>(configPath);
             if (loadedConfig != null) return loadedConfig;
         }
         catch (Exception ex)
         {
-            api.Logger.Error($"Failed to load config '{configPath}': {ex}");
+            api.Logger.Error($"[MaderLand] Failed to load config '{configPath}': {ex}");
         }
 
-        T defaultConfig = new();
-        api.StoreModConfig(defaultConfig, configPath);
-        api.Logger.Notification($"Created default config '{configPath}'");
-        return defaultConfig;
+        T newConfig = defaultConfig == null ? new() : defaultConfig;
+        api.StoreModConfig(newConfig, configPath);
+        api.Logger.Notification($"[MaderLand] Created default config '{configPath}'.");
+        return newConfig;
     }
 
     /// <summary>

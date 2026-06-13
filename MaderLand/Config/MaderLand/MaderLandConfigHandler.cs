@@ -13,7 +13,7 @@ public class MaderLandConfigHandler
     /// </summary>
     public const string ConfigPath = "maderland/maderland.json";
 
-    public static MaderLandConfig Load(ICoreAPI api) => ModConfigHandler.Load<MaderLandConfig>(api, ConfigPath);
+    public static MaderLandConfig Load(ICoreAPI api) => ModConfigHandler.Load<MaderLandConfig>(api, ConfigPath, null);
 
     public static void Save(ICoreAPI api) => ModConfigHandler.Save(api, ConfigPath, ConfigService.MaderLandConfig);
 }

@@ -42,7 +42,7 @@ public class TrampleSystem : ModSystem
         api = serverApi;
 
         // Register game tick listener running every 100ms.
-        api.Event.RegisterGameTickListener(OnGameTick, 100);
+        api.Event.RegisterGameTickListener(ProcessTrampling, 100);
         api.Event.PlayerLeave += OnPlayerGone;
         api.Event.PlayerDisconnect += OnPlayerGone;
 
@@ -66,16 +66,13 @@ public class TrampleSystem : ModSystem
     /// </summary>
     private void AppendCleanupBehavior()
     {
-        api.Logger.Notification("[Trample] started AppendCleanupBehavior.");
         if (ConfigService.TrampleConfig == null)
         {
             api.Logger.Error("[Trample] TrampleConfig is null. Make sure to load the config before finalizing assets.");
             return;
         }
 
-        api.Logger.Notification("[Trample] About to start on Passable.");
         AppendCleanupBehavior(ConfigService.TrampleConfig.Passable);
-        api.Logger.Notification("[Trample] About to start on Impassable.");
         AppendCleanupBehavior(ConfigService.TrampleConfig.Impassable);
     }
 
@@ -85,46 +82,54 @@ public class TrampleSystem : ModSystem
     /// <param name="trampleGroupCfg">Trample group.</param>
     private void AppendCleanupBehavior(TrampleGroupCfg trampleGroupCfg)
     {
-        api.Logger.Notification("[Trample] started AppendCleanupBehavior.");
         if (trampleGroupCfg == null) return;
-        api.Logger.Notification("[Trample] trampleGroupCfg exists.");
 
         if (trampleGroupCfg.Blocks != null && trampleGroupCfg.Blocks.Count > 0)
         {
-            api.Logger.Notification($"[Trample] Amount of Blocks: {trampleGroupCfg.Blocks.Count}.");
             foreach (string blockCode in trampleGroupCfg.Blocks.Keys)
             {
-                // Add cleanup behavior to blocks that can be trampled.
-                AssetLocation loc = new(blockCode);
-                Block? block = api.World.GetBlock(loc);
-                if (block == null)
-                {
-                    api.Logger.Error($"[Trample] AppendCleanupBehavior(): Could not find block class for '{blockCode}'.");
-                    continue;
-                }
-                block.BlockBehaviors = block.BlockBehaviors.Append(new TrampleCleanupBehavior(this, block));
+                AppendCleanupBehavior(blockCode);
             }
         }
 
         if (trampleGroupCfg.BlockVariants != null && trampleGroupCfg.BlockVariants.Count > 0)
         {
-            api.Logger.Notification($"[Trample] Amount of BlockVariants: {trampleGroupCfg.BlockVariants.Count}.");
-            // TODO add cleanup behavior to block variants defined by wildcard in config.
-            // For example, if "game:soil-*-normal" is defined in config, we need to add cleanup behavior to all blocks matching that pattern, like "game:soil-medium-normal", "game:soil-low-normal", etc.
-            // We need to research how to ask Vintage Story API for blocks and their codes that match given wildcard pattern. Then we handle that list like one above and add cleanup behavior to all those blocks.
+            foreach (TrampleBlockVariantCfg variant in trampleGroupCfg.BlockVariants)
+            {
+                Block[] allVariants = api.World.SearchBlocks(variant.FromBlockCode);
+                foreach (Block block in allVariants)
+                {
+                    AppendCleanupBehavior(block.Code);
+                }
+            }
         }
+    }
+
+    /// <summary>
+    /// Add cleanup behavior to blocks that can be trampled.
+    /// </summary>
+    /// <param name="blockCode">Block code.</param>
+    private void AppendCleanupBehavior(AssetLocation blockCode)
+    {
+        Block? block = api.World.GetBlock(blockCode);
+        if (block == null)
+        {
+            api.Logger.Error($"[Trample] AppendCleanupBehavior(): Could not find block class for '{blockCode}'.");
+            return;
+        }
+        block.BlockBehaviors = block.BlockBehaviors.Append(new TrampleHandleBehavior(this, block));
     }
 
     // ////////////////////////////////////////////////////////////////////////
 
     /// <summary>
-    /// Triggered every 100ms on the server to update and detect player position changes.
+    /// Process player movement and perform trampling logic if they walked onto a new block.
     /// </summary>
     /// <param name="dt">Delta time.</param>
-    private void OnGameTick(float dt)
+    private void ProcessTrampling(float dt)
     {
-        // Only run detection if the trample feature is active in the configuration
-        if (api == null || !ConfigService.TrampleConfig.Active) return;
+        // Only run detection if the trample feature is active or allowed in the configuration
+        if (api == null || !ConfigService.TrampleConfig.Active || !ConfigService.TrampleConfig.Allowed) return;
 
         // Go over all players...
         foreach (IPlayer player in api.World.AllOnlinePlayers)
@@ -182,11 +187,23 @@ public class TrampleSystem : ModSystem
     /// <param name="posPlayer">The block position they walked onto.</param>
     private void OnPlayerWalkedOntoNewBlock(IServerPlayer player, BlockPos posPlayer)
     {
+        TrampleLogic(player, posPlayer);
+    }
+
+    //
+
+    /// <summary>
+    /// Perform block trampling logic.
+    /// </summary>
+    /// <param name="player">Server player.</param>
+    /// <param name="posPlayer">Position of that player.</param>
+    private void TrampleLogic(IServerPlayer player, BlockPos posPlayer)
+    {
         Block blockPlayer = api.World.BlockAccessor.GetBlock(posPlayer);
         BlockPos posUnder = posPlayer.DownCopy();
         Block blockUnder = api.World.BlockAccessor.GetBlock(posUnder);
 
-        string message = $"[Trample] Player {player.PlayerName} walked to new block: {blockPlayer.Code} at {posPlayer}. Block under: {blockUnder.Code}";
+        string message = $"[Trample] Player {player.PlayerName} walked to new block: {blockPlayer.Code} at {posPlayer}. Block under: {blockUnder.Code}.";
         api.Logger.Notification(message); // DEBUG
 
         // We can trample grass and similar stuff that can be walked through by players.
@@ -195,10 +212,8 @@ public class TrampleSystem : ModSystem
         if (result) TryTrampleBlock(blockUnder, posUnder, false);
     }
 
-    //
-
     /// <summary>
-    /// Perform block trampling logic.
+    /// Try to trample given block.
     /// Note: returns false when fails to trample something that needs to be trampled. For example, you need to trample grass fully before trampling block under that grass.
     /// </summary>
     /// <param name="block">Block data.</param>
@@ -221,17 +236,19 @@ public class TrampleSystem : ModSystem
 
         // Only save if the block wasn't replaced. 
         // If it WAS replaced, the TrampleCleanupBehavior already handled cleanup and saving.
-        if (!replaced) SaveChunkTrampleData(chunk, chunkTrampleData);
-        
-        // Block was trampled, we skip checking block underneath.
-        return false;
+        if (!replaced)
+        {
+            SaveChunkTrampleData(chunk, chunkTrampleData);
+        }
+        return false; // Block was trampled, we skip checking block underneath.
     }
 
     /// <summary>
     /// Get trample configuration for given block.
     /// </summary>
     /// <param name="block">Block data.</param>
-    /// <returns>trample config data for given block or null if block cannot be trampled.</returns>
+    /// <param name="passable">True if we check passable block, otherwise false.</param>
+    /// <returns>Trample config data for given block or null if block cannot be trampled.</returns>
     private TrampleBlockCfg? GetTrampleConfig(Block block, bool passable)
     {
         // Air block will never be involved in anything. And since it is most common block in the world, we can save a lot of CPU time by just skipping it without trying to find config for it.
@@ -246,37 +263,45 @@ public class TrampleSystem : ModSystem
     /// </summary>
     /// <param name="trampleGroupCfg">Trample group.</param>
     /// <param name="block">Block data.</param>
-    /// <returns>trample config data for given block or null if block cannot be trampled.</returns>
+    /// <returns>Trample config data for given block or null if block cannot be trampled.</returns>
     private TrampleBlockCfg? GetTrampleConfigFromGroup(TrampleGroupCfg trampleGroupCfg, Block block)
     {
         string currBlockCode = block.Code.ToString();
 
-        // First: try to find config by exact block code.
+        // First: try to find config by exact block code. This will change current block type to new, exact block type.
         trampleGroupCfg.Blocks.TryGetValue(currBlockCode, out TrampleBlockCfg? trampleBlockCfg);
         if (trampleBlockCfg != null) return trampleBlockCfg;
 
         // Second: try to find config by block code with wildcard. For example, "game:soil-*-normal" will match "game:soil-medium-normal", "game:soil-low-normal", etc.
+        // Once found, we will calculate the new block code based on the wildcard. For example, "game:soil-*-normal" will become "game:soil-medium-sparse" if the original block was "game:soil-medium-normal".
         foreach (TrampleBlockVariantCfg variant in trampleGroupCfg.BlockVariants)
         {
-            //string message = $"[Trample] Check variant {variant.FromBlockCode} against {currBlockCode}";
-            //api.Logger.Notification(message); // DEBUG
-
             if (!WildcardUtil.Match(variant.FromBlockCode, currBlockCode)) continue;
-            AssetLocation resolvedTo = block.Code.WildCardReplace(
-                variant.FromBlockCode,
-                variant.ToBlockCode
-            );
-            //string message1 = $"[Trample] Found match for variant {variant.FromBlockCode} against {currBlockCode}. Calculated ToBlockCode: {resolvedTo.ToString()}";
-            //api.Logger.Notification(message1); // DEBUG
+
+            // If ToBlockCode is empty, we want to remove block. If ToBlockCode has no wildcard, we change block to exact block type instead of calculated block type.
+            string resolvedToBlockCode = "";
+            try
+            {
+                if (variant.ToBlockCode.Contains('*')) resolvedToBlockCode = block.Code.WildCardReplace(variant.FromBlockCode, variant.ToBlockCode);
+            }
+            catch
+            {
+                api.Logger.Error($"[Trample] Failed to resolve wildcard block code for currBlockCode='{currBlockCode}' with FromBlockCode='{variant.FromBlockCode}' and ToBlockCode='{variant.ToBlockCode}'. Make sure the wildcard is used correctly in config.");
+                return null;
+            }
+
+            //string message = $"[Trample] Found match for wildcard FromBlockCode '{variant.FromBlockCode}' and wildcard ToBlockCode '{variant.ToBlockCode}' against '{currBlockCode}'. Calculated full ToBlockCode: '{resolvedTo}'.";
+            //api.Logger.Notification(message); // DEBUG
 
             return new TrampleBlockVariantCfg
             {
                 FromBlockCode = variant.FromBlockCode,
-                ToBlockCode = resolvedTo.ToString(),
+                ToBlockCode = resolvedToBlockCode,
                 Durability = variant.Durability
             };
         }
-        return null;
+
+        return null; // Failed to find anything that can be trampled.
     }
 
     //
@@ -371,13 +396,15 @@ public class TrampleSystem : ModSystem
     /// <param name="chunk">Chunk.</param>
     /// <param name="create">If true and trample data is missing, create trample data.</param>
     /// <returns>Trample data or null if no trample data.</returns>
-    private static ChunkTrampleData? LoadChunkTrampleData(IServerChunk chunk, bool create)
+    private ChunkTrampleData? LoadChunkTrampleData(IServerChunk chunk, bool create)
     {
         ChunkTrampleData? trampleData = null;
         // Try to get existing data, otherwise initialize a new one (if can).
         byte[] rawData = chunk.GetServerModdata(TrampleConst.trampleDataKey);
+
         if (rawData != null) trampleData = SerializerUtil.Deserialize<ChunkTrampleData>(rawData);
         else if (create) trampleData = new ChunkTrampleData();
+
         return trampleData;
     }
 

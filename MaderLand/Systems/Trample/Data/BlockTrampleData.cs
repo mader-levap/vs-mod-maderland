@@ -8,7 +8,15 @@ namespace MaderLand.Systems.Trample.Data;
 [ProtoContract]
 public class BlockTrampleData
 {
-    // Current durability of block.
+    /// <summary>
+    /// Current durability of block. Reduced by trampling power. When it reaches 0, block should be fully trampled (replaced with different block).
+    /// </summary>
     [ProtoMember(1)]
-    public float Durability = 666f; // deliberately weird default value to easily spot uninitialized data in case of bugs
+    public float Durability = 666f;
+
+    /// <summary>
+    /// Regeneration rate of block.
+    /// </summary>
+    [ProtoMember(2)]
+    public float Regen = 666f;
 }

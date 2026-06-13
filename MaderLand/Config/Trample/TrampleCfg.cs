@@ -13,6 +13,11 @@ public class TrampleCfg
     public bool Active { get; set; } = true;
 
     /// <summary>
+    /// Is trampling allowed?
+    /// </summary>
+    public bool Allowed { get; set; } = true;
+
+    /// <summary>
     /// Trampling data.
     /// </summary>
     public TramplePowerCfg Power { get; set; } = new TramplePowerCfg();
@@ -21,10 +26,10 @@ public class TrampleCfg
     /// Passable blocks are blocks that can be walked through and being above impassable block. Grass, bush, flowers, etc.
     /// If there is something at passable block, it will be affected by trampling instead of impassable block below it.
     /// </summary>
-    public TrampleGroupCfg Passable { get; set; } = TrampleConst.DefaultPassable;
+    public TrampleGroupCfg Passable { get; set; } = new();
 
     /// <summary>
     /// Impassable blocks are blocks that you walk on, will be affected by trampling if nothing is above it. Solid blocks like soil, etc.
     /// </summary>
-    public TrampleGroupCfg Impassable { get; set; } = TrampleConst.DefaultImpassable;
+    public TrampleGroupCfg Impassable { get; set; } = new();
 }
