@@ -7,7 +7,7 @@ When player walks on block, mod checks if that block is in config. If it is, it 
 ## Commands
 
 - `/ml trample active [on|off]`: Turn on/off Trample feature. You can skip `[on/off]`, will flip. If `off`, will completely disable mod, freezing state of trampling data.
-- `/ml trample allowed [on|off]`: If `off`, mod will not reduce durability of blocks, but will still handle any existing trampling data.
+- `/ml trample allow [on|off]`: If `off`, mod will not reduce durability of blocks, but will still handle any existing trampling data.
 
 ## Configuration
 

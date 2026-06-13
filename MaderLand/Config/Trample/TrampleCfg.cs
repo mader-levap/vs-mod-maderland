@@ -15,7 +15,7 @@ public class TrampleCfg
     /// <summary>
     /// Is trampling allowed?
     /// </summary>
-    public bool Allowed { get; set; } = true;
+    public bool Allow { get; set; } = true;
 
     /// <summary>
     /// Trampling data.

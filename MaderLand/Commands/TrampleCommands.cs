@@ -24,6 +24,7 @@ public static class TrampleCommands
         switch (action)
         {
             case "active": return Active(api, player, parameters);
+            case "allow": return Allow(api, player, parameters);
             case "check": return CheckBlock(player);
             default:
                 return TextCommandResult.Error($"Unknown action '{action}' for feature 'trample'!");
@@ -31,7 +32,7 @@ public static class TrampleCommands
     }
 
     /// <summary>
-    /// Action: Activates or deactivates Trample feature.
+    /// Action: Activates or deactivates Trample feature. If off, trampling data is completely frozen.
     /// </summary>
     /// <param name="api">Core API.</param>
     /// <param name="player"></param>
@@ -40,8 +41,7 @@ public static class TrampleCommands
     private static TextCommandResult Active(ICoreServerAPI api, IServerPlayer player, string? parameters)
     {
         if (parameters == null || parameters.Equals(""))
-        {
-            // Just flip.
+        { // Just flip.
             ConfigService.TrampleConfig.Active = !ConfigService.TrampleConfig.Active;
         } else if (parameters.Equals("on")) {
             if (ConfigService.TrampleConfig.Active)
@@ -63,6 +63,45 @@ public static class TrampleCommands
 
         TrampleConfigHandler.Save(api);
         string message = "Trample feature is turned " + (ConfigService.TrampleConfig.Active ? "on" : "off") + ".";
+        player.SendMessage(GlobalConstants.GeneralChatGroup, message, EnumChatType.CommandSuccess);
+        return TextCommandResult.Success();
+    }
+
+    /// <summary>
+    /// Action: allows or disallows trampling. If off, trampling does not occur, but trampling data is still processed.
+    /// </summary>
+    /// <param name="api">Core API.</param>
+    /// <param name="player"></param>
+    /// <param name="parameters">All other parameters.</param>
+    /// <returns>Result of command.</returns>
+    private static TextCommandResult Allow(ICoreServerAPI api, IServerPlayer player, string? parameters)
+    {
+        if (parameters == null || parameters.Equals(""))
+        { // Just flip.
+            ConfigService.TrampleConfig.Allow = !ConfigService.TrampleConfig.Allow;
+        }
+        else if (parameters.Equals("on"))
+        {
+            if (ConfigService.TrampleConfig.Allow)
+            {
+                player.SendMessage(GlobalConstants.GeneralChatGroup, "Trampling is already allowed!", EnumChatType.CommandSuccess);
+                return TextCommandResult.Success();
+            }
+            ConfigService.TrampleConfig.Allow = true;
+        }
+        else if (parameters.Equals("off"))
+        {
+            if (!ConfigService.TrampleConfig.Allow)
+            {
+                player.SendMessage(GlobalConstants.GeneralChatGroup, "Trampling is already disallowed!", EnumChatType.CommandSuccess);
+                return TextCommandResult.Success();
+            }
+            ConfigService.TrampleConfig.Allow = false;
+        }
+        else return TextCommandResult.Error($"Command '/ml trample allow': unknown parameter '{parameters}'!");
+
+        TrampleConfigHandler.Save(api);
+        string message = "Trampling is now " + (ConfigService.TrampleConfig.Allow ? "allowed" : "not allowed") + ".";
         player.SendMessage(GlobalConstants.GeneralChatGroup, message, EnumChatType.CommandSuccess);
         return TextCommandResult.Success();
     }
