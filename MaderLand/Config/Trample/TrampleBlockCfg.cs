@@ -6,11 +6,6 @@
 public class TrampleBlockCfg
 {
     /// <summary>
-    /// Source block code.
-    /// </summary>
-    public string? FromBlockCode { get; set; } = null;
-
-    /// <summary>
     /// Target block code. When durability hits 0, it will be replaced by block with this code. Empty string means block will be removed.
     /// </summary>
     public string ToBlockCode { get; set; } = "";

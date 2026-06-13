@@ -24,4 +24,10 @@ public class TrampleCleanupBehavior(TrampleSystem trampleSystem, Block block) : 
         string message = $"[Trample] Block '{block.Code}' at {pos} was removed. Cleaned any trampling data.";
         world.Logger.Notification(message); // DEBUG
     }
+
+    /*public override void OnBlockBroken(IWorldAccessor world, BlockPos pos, IPlayer byPlayer, float dropQuantityMultiplier, ref EnumHandling handling)
+    {
+        string message = $"[Trample] Block '{block.Code}' at {pos} was broken. Cleaned any trampling data.";
+        world.Logger.Notification(message); // DEBUG
+    }*/
 }

@@ -11,7 +11,7 @@ GitHub: https://github.com/mader-levap/vs-mod-maderland
 ## Tech Stack
 
 - Language: C# (.NET 10)
-- Game: Vintage Story 1.22+
+- Game: Vintage Story 1.22.3+
 - Build: Cake (via `CakeBuild/` directory)
 
 ## Vintage Story
