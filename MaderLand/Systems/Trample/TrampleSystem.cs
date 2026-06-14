@@ -129,7 +129,7 @@ public class TrampleSystem : ModSystem
     private void ProcessTrampling(float dt)
     {
         // Only run detection if the trample feature is active or allowed in the configuration
-        if (api == null || !ConfigService.TrampleConfig.Active || !ConfigService.TrampleConfig.Allowed) return;
+        if (api == null || !ConfigService.TrampleConfig.Active || !ConfigService.TrampleConfig.Allow) return;
 
         // Go over all players...
         foreach (IPlayer player in api.World.AllOnlinePlayers)
