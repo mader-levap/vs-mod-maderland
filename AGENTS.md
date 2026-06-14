@@ -25,13 +25,13 @@ Use these resources if you are not sure about particulars of API.
 
 ```
 MaderLand/
-├─ Commands/                    # Contains command /ml (short for maderland) and its subcommands for every feature
-├─ Config/                      # Utilities and config definitions for every feature
-├─ Systems/                     # ModSystems for every feature: high-level, timers, game event subscriptions etc.
-├─ Utils/                       # Common utility classes
-├─ MaderLandModSystem.cs        # Main ModSystem entry point
+├─ Commands/                    # Contains command /ml (short for maderland) and its subcommands for every feature.
+├─ Config/                      # Utilities and config definitions for every feature.
+├─ Systems/                     # ModSystems for every feature.
+├─ Utils/                       # Common utility classes.
+├─ MaderLandModSystem.cs        # Main ModSystem entry point.
 ├─ assets/
-│   └─ maderland/               # JSON assets, lang files
+│   └─ maderland/               # JSON assets, lang files.
 └─ modinfo.json
 ```
 
@@ -43,7 +43,7 @@ MaderLand/
 - There is main command `/ml` (short for `maderland`). Format: `/ml [feature] [action] [all other parameters, optional]`
 - Each feature has subcommand, for example Trails feature has `/ml trails`.
 - Each feature has one or more actions. Example: `/ml trails check`.
-- All features have at least one action `active` that is used to turn feature on or off. Example: `/ml trails active off`.
+- All features have at least one action `active` that is used to turn whole feature on or off. Example: `/ml trails active off`.
 
 ### Configuration
 - Code loads/saves/creates configuration via generic `ModConfigHandler` class.

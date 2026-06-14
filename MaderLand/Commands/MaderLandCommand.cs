@@ -25,7 +25,7 @@ public static class MaderLandCommand
             .HandleWith(args =>
             {
                 IServerPlayer? player = args.Caller.Player as IServerPlayer;
-                if (player == null) return TextCommandResult.Error("This command can only be used by a player.");
+                if (player == null) return TextCommandResult.Error("[MaderLand] This command can only be used by a player.");
 
                 string feature = (string)args[0];
                 string action = (string)args[1];
@@ -50,7 +50,7 @@ public static class MaderLandCommand
         {
             case "trample": return TrampleCommands.Handle(api, player, action, parameters);
             default:
-                return TextCommandResult.Error($"Unknown feature '{feature}'!");
+                return TextCommandResult.Error($"[MaderLand] Unknown feature '{feature}'!");
         }
     }
 }

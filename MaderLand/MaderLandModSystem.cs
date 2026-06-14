@@ -1,5 +1,6 @@
 ﻿using MaderLand.Commands;
 using MaderLand.Config.Utils;
+using MaderLand.Systems.Manager;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
 using Vintagestory.API.Server;
@@ -18,7 +19,9 @@ public class MaderLandModSystem : ModSystem
     public override void Start(ICoreAPI api)
     {
         base.Start(api);
-        ConfigService.LoadAll(api);
+
+        ConfigService.LoadAll(api); // Load configuration for all features.
+        FeatureManager.InitializeAll(api); // Initialize all features.
     }
 
     /// <summary>

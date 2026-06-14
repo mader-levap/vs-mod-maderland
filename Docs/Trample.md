@@ -4,6 +4,8 @@
 
 When player walks on block, mod checks if that block is in config. If it is, it reduces durability of that block by configured amount. If durability hits 0, block changes to another block (configured in `ToBlockCode`) or gets removed if `ToBlockCode` is empty.
 
+Some trampled blocks cannot change back to original blocks. So grass on soil will not regrow as long as trample data is present and Durability is not at max.
+
 ## Commands
 
 - `/ml trample active [on|off]`: Turn on/off Trample feature. You can skip `[on/off]`, will flip. If `off`, will completely disable mod, freezing state of trampling data.
@@ -26,17 +28,20 @@ Format for passable/impassable:
 - `Blocks`: Dictionary of blocks. Key is source block code, value is trampling data. Block code must be exact. Format of entry:
   - `ToBlockCode`: Target block code. Can be empty if should remove block completely.
   - `Durability`: Durability of block. Walking on this block will reduce that number. If it hits 0, block changes to ToBlockCode.
+  - `Regen`: Regeneration of block. If block is not walked on, it will regenerate durability by this amount per second. If you want to disable regeneration, set it to 0.
 
 Example:
 ```
   "Blocks": {
     "game:soil-sparse": {
       "ToBlockCode": "game:soil-verysparse",
-      "Durability": 50.0
+      "Durability": 50.0,
+      "Regen": 10.0
     },
     "game:soil-verysparse": {
       "ToBlockCode": "",
-      "Durability": 50.0
+      "Durability": 50.0,
+      "Regen": 10.0
     }
   }
 ```
@@ -48,9 +53,11 @@ Example:
     {
       "FromBlockCode": "game:soil-*-normal",
       "ToBlockCode": "game:soil-*-sparse",
-      "Durability": 50.0
+      "Durability": 50.0,
+      "Regen": 10.0
     }
   ]
 ```
 Format of entry is same as `Blocks`, only difference is addition of `FromBlockCode` field. Note you can have ToBlockCode without wildcard (will replace all variants with same block) or empty (will remove block).
 
+You can specify special state where FromBlockCode is same as ToBlockCode. It won't change block, but will still reduce durability with all side effects like grass being unable to grow back.

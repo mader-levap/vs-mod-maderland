@@ -1,5 +1,7 @@
 ﻿using MaderLand.Config.Trample;
 using MaderLand.Config.Utils;
+using MaderLand.Systems.Trample;
+using MaderLand.Systems.Trample.Data;
 using Vintagestory.API.Common;
 using Vintagestory.API.Config;
 using Vintagestory.API.MathTools;
@@ -26,8 +28,9 @@ public static class TrampleCommands
             case "active": return Active(api, player, parameters);
             case "allow": return Allow(api, player, parameters);
             case "check": return CheckBlock(player);
+            case "debug": return DebugBlock(api, player);
             default:
-                return TextCommandResult.Error($"Unknown action '{action}' for feature 'trample'!");
+                return TextCommandResult.Error($"[Trample] Unknown action '{action}' for feature 'trample'!");
         }
     }
 
@@ -43,26 +46,29 @@ public static class TrampleCommands
         if (parameters == null || parameters.Equals(""))
         { // Just flip.
             ConfigService.TrampleConfig.Active = !ConfigService.TrampleConfig.Active;
-        } else if (parameters.Equals("on")) {
+        }
+        else if (parameters.Equals("on"))
+        {
             if (ConfigService.TrampleConfig.Active)
             {
-                player.SendMessage(GlobalConstants.GeneralChatGroup, "Trample feature is already active!", EnumChatType.CommandSuccess);
+                player.SendMessage(GlobalConstants.GeneralChatGroup, "[Trample] Trample feature is already active!", EnumChatType.CommandSuccess);
                 return TextCommandResult.Success();
             }
             ConfigService.TrampleConfig.Active = true;
-        } else if (parameters.Equals("off"))
+        }
+        else if (parameters.Equals("off"))
         {
             if (!ConfigService.TrampleConfig.Active)
             {
-                player.SendMessage(GlobalConstants.GeneralChatGroup, "Trample feature is already inactive!", EnumChatType.CommandSuccess);
+                player.SendMessage(GlobalConstants.GeneralChatGroup, "[Trample] Trample feature is already inactive!", EnumChatType.CommandSuccess);
                 return TextCommandResult.Success();
             }
             ConfigService.TrampleConfig.Active = false;
         }
-        else return TextCommandResult.Error($"Command '/ml trample active': unknown parameter '{parameters}'!");
+        else return TextCommandResult.Error($"[Trample] Command '/ml trample active': unknown parameter '{parameters}'!");
 
         TrampleConfigHandler.Save(api);
-        string message = "Trample feature is turned " + (ConfigService.TrampleConfig.Active ? "on" : "off") + ".";
+        string message = "[Trample] Trample feature is turned " + (ConfigService.TrampleConfig.Active ? "on" : "off") + ".";
         player.SendMessage(GlobalConstants.GeneralChatGroup, message, EnumChatType.CommandSuccess);
         return TextCommandResult.Success();
     }
@@ -70,7 +76,7 @@ public static class TrampleCommands
     /// <summary>
     /// Action: allows or disallows trampling. If off, trampling does not occur, but trampling data is still processed.
     /// </summary>
-    /// <param name="api">Core API.</param>
+    /// <param name="api">Core server API.</param>
     /// <param name="player"></param>
     /// <param name="parameters">All other parameters.</param>
     /// <returns>Result of command.</returns>
@@ -84,7 +90,7 @@ public static class TrampleCommands
         {
             if (ConfigService.TrampleConfig.Allow)
             {
-                player.SendMessage(GlobalConstants.GeneralChatGroup, "Trampling is already allowed!", EnumChatType.CommandSuccess);
+                player.SendMessage(GlobalConstants.GeneralChatGroup, "[Trample] Trampling is already allowed!", EnumChatType.CommandSuccess);
                 return TextCommandResult.Success();
             }
             ConfigService.TrampleConfig.Allow = true;
@@ -93,15 +99,15 @@ public static class TrampleCommands
         {
             if (!ConfigService.TrampleConfig.Allow)
             {
-                player.SendMessage(GlobalConstants.GeneralChatGroup, "Trampling is already disallowed!", EnumChatType.CommandSuccess);
+                player.SendMessage(GlobalConstants.GeneralChatGroup, "[Trample] Trampling is already disallowed!", EnumChatType.CommandSuccess);
                 return TextCommandResult.Success();
             }
             ConfigService.TrampleConfig.Allow = false;
         }
-        else return TextCommandResult.Error($"Command '/ml trample allow': unknown parameter '{parameters}'!");
+        else return TextCommandResult.Error($"[Trample] Command '/ml trample allow': unknown parameter '{parameters}'!");
 
         TrampleConfigHandler.Save(api);
-        string message = "Trampling is now " + (ConfigService.TrampleConfig.Allow ? "allowed" : "not allowed") + ".";
+        string message = "[Trample] Trampling is now " + (ConfigService.TrampleConfig.Allow ? "allowed" : "not allowed") + ".";
         player.SendMessage(GlobalConstants.GeneralChatGroup, message, EnumChatType.CommandSuccess);
         return TextCommandResult.Success();
     }
@@ -115,16 +121,39 @@ public static class TrampleCommands
     {
         // Get the player's current block position (feet level).
         BlockPos playerPos = player.Entity.Pos.AsBlockPos;
-        
         // Get the position directly beneath the player's feet.
-        // Use DownCopy() instead of Down() to avoid mutating the player's actual position object
         BlockPos standingOnPos = playerPos.DownCopy();
 
         // Get the block instance from the world.
         Block standingOnBlock = player.Entity.World.BlockAccessor.GetBlock(standingOnPos);
 
         // Construct the message with the block's code (e.g., game:dirt).
-        string message = $"You are standing on: {standingOnBlock.Code} (ID: {standingOnBlock.Id})";
+        string message = $"[Trample] You are standing on: {standingOnBlock.Code} (ID: {standingOnBlock.Id})";
+
+        player.SendMessage(GlobalConstants.GeneralChatGroup, message, EnumChatType.CommandSuccess);
+        return TextCommandResult.Success();
+    }
+
+    /// <summary>
+    /// Action: Check trample data of block player is standing on. Creative mode is recommended as in this case player does not trample.
+    /// </summary>
+    /// <param name="api">Core server API.</param>
+    /// <param name="player">Player that input this command.</param>
+    /// <returns>Result of command.</returns>
+    private static TextCommandResult DebugBlock(ICoreServerAPI api, IServerPlayer player)
+    {
+        // Get the player's current block position (feet level).
+        BlockPos playerPos = player.Entity.Pos.AsBlockPos;
+        // Get the position directly beneath the player's feet.
+        BlockPos standingOnPos = playerPos.DownCopy();
+
+        string message = "[Trample] No trample data for block under you.";
+
+        BlockTrampleData ? trampleData = TrampleService.GetTrampleData(api, standingOnPos);
+        if (trampleData != null)
+        {
+            message = $"[Trample] Trample data: Durability={trampleData.Durability}, MaxDurability={trampleData.MaxDurability}, Regen={trampleData.Regen}";
+        }
 
         player.SendMessage(GlobalConstants.GeneralChatGroup, message, EnumChatType.CommandSuccess);
         return TextCommandResult.Success();
