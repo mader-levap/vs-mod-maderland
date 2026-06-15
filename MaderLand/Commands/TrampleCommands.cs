@@ -149,10 +149,10 @@ public static class TrampleCommands
 
         string message = "[Trample] No trample data for block under you.";
 
-        BlockTrampleData ? trampleData = TrampleService.GetTrampleData(api, standingOnPos);
-        if (trampleData != null)
+        BlockTrampleData? blockData = TrampleService.GetTrampleData(api, standingOnPos).blockData;
+        if (blockData != null)
         {
-            message = $"[Trample] Trample data: Durability={trampleData.Durability}, MaxDurability={trampleData.MaxDurability}, Regen={trampleData.Regen}";
+            message = $"[Trample] Trample data: Durability={blockData.Durability}, MaxDurability={blockData.MaxDurability}, Regen={blockData.Regen}, UpdatedAt={blockData.UpdatedAt}.";
         }
 
         player.SendMessage(GlobalConstants.GeneralChatGroup, message, EnumChatType.CommandSuccess);

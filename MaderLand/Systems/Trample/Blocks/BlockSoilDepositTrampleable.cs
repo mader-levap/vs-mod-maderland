@@ -21,11 +21,16 @@ public class BlockSoilDepositTrampleable : BlockSoilDeposit
             return;
         }
 
-        BlockTrampleData? data = TrampleService.GetTrampleData((ICoreServerAPI)world.Api, pos);
-        if (data != null)
+        ICoreServerAPI api = (ICoreServerAPI)world.Api;
+        AllTrampleData allTrampleData = TrampleService.GetTrampleData(api, pos);
+        if (allTrampleData.blockData != null)
         {
-            // Do not allow grass to grow if the soil is trampled.
-            if (data.Durability < data.MaxDurability) return;
+            TrampleService.DeltaTrampleData(api, allTrampleData.blockData);
+
+            if (allTrampleData.blockData.Durability >= allTrampleData.blockData.MaxDurability)
+            { // Block fully recovered from trampling, remove trample data.
+                TrampleService.RemoveTrampleData(api, allTrampleData, pos);
+            } else return; // Do not allow grass to grow if the soil is trampled.
         }
 
         // If the soil is not trampled, or if it has fully recovered, allow grass growth as normal.

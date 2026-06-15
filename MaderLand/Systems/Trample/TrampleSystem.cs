@@ -167,19 +167,15 @@ public class TrampleSystem : ModSystem
         TrampleBlockCfg? trampleBlockCfg = TrampleService.GetTrampleConfig(api, block, passable);
         if (trampleBlockCfg == null) return true; // No trample config for this block, skip.
 
-        IServerChunk chunk = api.WorldManager.GetChunk(pos);
-        if (chunk == null) return true; // No chunk found for this position, skip.
+        AllTrampleData allTrampleData = TrampleService.ResolveBlockTrampleData(api, trampleBlockCfg, pos);
+        if (!allTrampleData.IsValid()) return true;
 
-        ChunkTrampleData? chunkTrampleData = TrampleService.LoadChunkTrampleData(chunk, true);
-        if (chunkTrampleData == null) return true; // Failed to load or create trample data for this chunk, skip.
+        TrampleService.DeltaTrampleData(api, allTrampleData.blockData);
+        Block? replacementBlock = TrampleBlock(trampleBlockCfg, allTrampleData.blockData, block, pos);
 
-        BlockTrampleData blockTrampleData = TrampleService.ResolveBlockTrampleData(trampleBlockCfg, chunkTrampleData, pos);
-        Block? replacementBlock = TrampleBlock(trampleBlockCfg, blockTrampleData, block, pos);
+        if (replacementBlock != null) RefreshTrampleData(allTrampleData, replacementBlock, pos, passable);
 
-        if (replacementBlock != null) RefreshTrampleData(chunk, chunkTrampleData, blockTrampleData, replacementBlock, pos, passable);
-
-        TrampleService.SaveChunkTrampleData(chunk, chunkTrampleData);
-
+        TrampleService.SaveChunkTrampleData(allTrampleData.chunk, allTrampleData.chunkData);
         return false; // Block was trampled, we skip checking block underneath.
     }
 
@@ -195,17 +191,18 @@ public class TrampleSystem : ModSystem
     /// <returns>Replacement block or null if block was not replaced.</returns>
     private Block? TrampleBlock(TrampleBlockCfg trampleBlockCfg, BlockTrampleData blockTrampleData, Block block, BlockPos pos)
     {
-        // Trample this block.
         float tramplePower = ResolveTramplePower();
-        blockTrampleData.Durability -= tramplePower;
 
-        string message = $"[Trample] Block '{block.Code}' at {pos} was trampled. Durability: {blockTrampleData.Durability}. Power: {tramplePower}.";
+        string message = $"[Trample] Block '{block.Code}' at {pos} will be trampled. Durability: {blockTrampleData.Durability}. Power: {tramplePower}.";
         api.Logger.Notification(message); // DEBUG
+
+        // Trample this block.
+        blockTrampleData.Durability -= tramplePower; // Most important line in whole feature, this is where the block actually gets trampled.
 
         if (blockTrampleData.Durability <= 0f)
         {
             blockTrampleData.Durability = 0f;
-            if (block.Code == trampleBlockCfg.ToBlockCode) return null; // Same block as next block.
+            if (block.Code == trampleBlockCfg.ToBlockCode) return null; // Exactly same block as next block.
 
             Block? nextBlock = ResolveNextBlock(trampleBlockCfg, block, pos);
             if (nextBlock == null) return null; // Unknown next block, skip.
@@ -214,13 +211,14 @@ public class TrampleSystem : ModSystem
             api.World.BlockAccessor.ExchangeBlock(nextBlock.BlockId, pos); // Will NOT trigger TrampleBehavior.OnBlockRemoved().
             api.World.BlockAccessor.MarkBlockDirty(pos);
 
-            // We will handle updating trample data for this block in RefreshTrampleData() after this function returns.
-
             string message1 = $"[Trample] Block '{block.Code}' at {pos} was fully trampled and replaced with '{nextBlock.Code}'.";
             api.Logger.Notification(message1); // DEBUG
+
+            // We will handle updating trample data for this block in RefreshTrampleData() after this function returns.
             return nextBlock;
         }
 
+        // Still some durability left, so no block replaced.
         return null;
     }
 
@@ -236,20 +234,20 @@ public class TrampleSystem : ModSystem
     }
 
     /// <summary>
-    /// // Block was replaced with another block, we need to refresh trample data.
+    /// Block was replaced with another block, we need to refresh trample data.
+    /// If that new block has no trample config, we will remove trample data for this block completely.
+    /// Otherwise, we will reset trample data for this block to match new block's trample config.
     /// </summary>
-    /// <param name="chunk">Chunk.</param>
-    /// <param name="chunkTrampleData">Trample data for chunk.</param>
-    /// <param name="blockTrampleData">Trample data for block.</param>
+    /// <param name="allTrampleData">All trample data.</param>
     /// <param name="replacementBlock">Block that replaced previous block.</param>
     /// <param name="pos">Position of block.</param>
-    private void RefreshTrampleData(IServerChunk chunk, ChunkTrampleData chunkTrampleData, BlockTrampleData blockTrampleData, Block replacementBlock, BlockPos pos, bool passable)
+    private void RefreshTrampleData(AllTrampleData allTrampleData, Block replacementBlock, BlockPos pos, bool passable)
     {
         TrampleBlockCfg? replacementTrampleBlockCfg = TrampleService.GetTrampleConfig(api, replacementBlock, passable);
         if (replacementTrampleBlockCfg == null)
         { // No trample config for this block, remove trample data completely.
             int localIndex = MapUtil.Index3d(pos.X & 31, pos.Y & 31, pos.Z & 31, 32, 32);
-            chunkTrampleData.Blocks.Remove(localIndex);
+            allTrampleData.chunkData.Blocks.Remove(localIndex);
 
             string message1 = $"[Trample] Replacement block '{replacementBlock.Code}' cannot be trampled. Removing trample data.";
             api.Logger.Notification(message1); // DEBUG
@@ -259,13 +257,15 @@ public class TrampleSystem : ModSystem
         string message = $"[Trample] Replacement block '{replacementBlock.Code}' can be trampled. Resetting trample data.";
         api.Logger.Notification(message); // DEBUG
 
-        blockTrampleData.Reset(replacementTrampleBlockCfg);
+        // Note we reduce durability of blocks placed due to trampling.
+        allTrampleData.blockData.Reset(replacementTrampleBlockCfg, api.World.Calendar.TotalDays);
+        allTrampleData.blockData.Durability *= replacementTrampleBlockCfg.DurRatio;
     }
 
     //
 
     /// <summary>
-    /// Resolve next block after full trampling. For example, trampled grass becomes soil.
+    /// Resolve next block after full trampling that should replace current block. For example, trampled grass becomes soil.
     /// </summary>
     /// <param name="trampleBlockCfg">Config data about current block.</param>
     /// <param name="block">Block data.</param>

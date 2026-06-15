@@ -2,6 +2,7 @@
 using MaderLand.Config.Utils;
 using MaderLand.Systems.Trample.Data;
 using Vintagestory.API.Common;
+using Vintagestory.API.Config;
 using Vintagestory.API.MathTools;
 using Vintagestory.API.Server;
 using Vintagestory.API.Util;
@@ -36,7 +37,7 @@ public class TrampleService
         if (!chunkTrampleData.Blocks.TryGetValue(localIndex, out BlockTrampleData? blockTrampleData))
         {
             // No existing trample data for this block, create new one and write to chunk data.
-            blockTrampleData = CreateBlockTrampleData(trampleBlockCfg);
+            blockTrampleData = CreateBlockTrampleData(api, trampleBlockCfg);
             chunkTrampleData.Blocks[localIndex] = blockTrampleData;
             SaveChunkTrampleData(chunk, chunkTrampleData);
         }
@@ -47,47 +48,84 @@ public class TrampleService
     /// </summary>
     /// <param name="api">Core server API.</param>
     /// <param name="pos">Position of block.</param>
-    /// <returns>Block trample data or null if no trample data.</returns>
-    public static BlockTrampleData? GetTrampleData(ICoreServerAPI api, BlockPos pos)
+    /// <returns>All trample data. Note some of these can be null.</returns>
+    public static AllTrampleData GetTrampleData(ICoreServerAPI api, BlockPos pos)
     {
-        IServerChunk chunk = api.WorldManager.GetChunk(pos);
-        if (chunk == null) return null; // No chunk found for this position, nothing to get.
-
-        ChunkTrampleData? trampleData = LoadChunkTrampleData(chunk, false);
-        if (trampleData == null) return null; // No trample data for this chunk, nothing to get.
+        AllTrampleData allTrampleData = ResolveMostData(api, pos, false);
+        if (allTrampleData.chunk == null || allTrampleData.chunkData == null) return allTrampleData; // No trample data for this chunk, nothing to get.
 
         int localIndex = MapUtil.Index3d(pos.X & 31, pos.Y & 31, pos.Z & 31, 32, 32);
-        if (!trampleData.Blocks.TryGetValue(localIndex, out BlockTrampleData? blockTrampleData)) return null; // No trample data for this block.
-        return blockTrampleData;
+        if (!allTrampleData.chunkData.Blocks.TryGetValue(localIndex, out BlockTrampleData? blockTrampleData)) return allTrampleData; // No block trample data.
+        allTrampleData.blockData = blockTrampleData;
+        return allTrampleData;
     }
 
     /// <summary>
     /// Resolve trample data for given block. If no trample data exists for the block, it will create new trample data based on the block's configuration and add it to the chunk's trample data.
     /// </summary>
+    /// <param name="api">Core server API.</param>
     /// <param name="trampleBlockCfg">Config data about current block.</param>
-    /// <param name="chunkTrampleData">Trample data for given chunk.</param>
     /// <param name="pos">Position of block.</param>
-    /// <returns>Trample data for given block.</returns>
-    public static BlockTrampleData ResolveBlockTrampleData(TrampleBlockCfg trampleBlockCfg, ChunkTrampleData chunkTrampleData, BlockPos pos)
+    /// <returns>All trample data. Note some of these can be null.</returns>
+    public static AllTrampleData ResolveBlockTrampleData(ICoreServerAPI api, TrampleBlockCfg trampleBlockCfg, BlockPos pos)
     {
+        AllTrampleData allTrampleData = ResolveMostData(api, pos, true);
+        if (allTrampleData.chunk == null || allTrampleData.chunkData == null) return allTrampleData; // No trample data for this chunk, nothing to get.
+
         int localIndex = MapUtil.Index3d(pos.X & 31, pos.Y & 31, pos.Z & 31, 32, 32);
-        if (!chunkTrampleData.Blocks.TryGetValue(localIndex, out BlockTrampleData? blockTrampleData))
+        if (!allTrampleData.chunkData.Blocks.TryGetValue(localIndex, out BlockTrampleData? blockData))
+        { // No existing trample data for this block, create new one and write to chunk data.
+            allTrampleData.blockData = CreateBlockTrampleData(api, trampleBlockCfg);
+            allTrampleData.chunkData.Blocks[localIndex] = allTrampleData.blockData;
+        } else
         {
-            // No existing trample data for this block, create new one and write to chunk data.
-            blockTrampleData = CreateBlockTrampleData(trampleBlockCfg);
-            chunkTrampleData.Blocks[localIndex] = blockTrampleData;
+            allTrampleData.blockData = blockData;
         }
-        return blockTrampleData;
+        return allTrampleData;
     }
+
+    /// <summary>
+    /// Resolve needed data.
+    /// </summary>
+    /// <param name="api">Core server API.</param>
+    /// <param name="pos">Position of block.</param>
+    /// <param name="create">If true and trample data is missing, create trample data.</param>
+    /// <returns>All trample data. Note some of these can be null.</returns>
+    private static AllTrampleData ResolveMostData(ICoreServerAPI api, BlockPos pos, bool create)
+    {
+        AllTrampleData allTrampleData = new();
+
+        allTrampleData.chunk = api.WorldManager.GetChunk(pos);
+        if (allTrampleData.chunk == null) return allTrampleData; // No chunk found for this position, nothing to get.
+
+        ChunkTrampleData? chunkData = LoadChunkTrampleData(allTrampleData.chunk, create);
+        if (chunkData == null) return allTrampleData; // No trample data for this chunk, nothing to get.
+
+        allTrampleData.chunkData = chunkData;
+        return allTrampleData;
+    }
+
+    /// <summary>
+    /// Apply delta to block trample data.
+    /// </summary>
+    /// <param name="api">Core server API.</param>
+    /// <param name="blockTrampleData">Updated trample data for given block.</param>
+    public static void DeltaTrampleData(ICoreServerAPI api, BlockTrampleData blockTrampleData)
+    {
+        // TODO actually apply detla: check current time, compare to time in UpdatedAt and Regen to know how much durability to bring back
+    }
+
+    //
 
     /// <summary>
     /// Create new trample data associated with given block.
     /// </summary>
     /// <param name="trampleBlockCfg">Config data about current block.</param>
     /// <returns>New trample data for given block.</returns>
-    private static BlockTrampleData CreateBlockTrampleData(TrampleBlockCfg trampleBlockCfg)
+    private static BlockTrampleData CreateBlockTrampleData(ICoreServerAPI api, TrampleBlockCfg trampleBlockCfg)
     {
-        BlockTrampleData blockTrampleData = new(trampleBlockCfg);
+        BlockTrampleData blockTrampleData = new(trampleBlockCfg, api.World.Calendar.TotalDays);
+        // Note it has full durability, unlike blocks placed due to trampling.
         return blockTrampleData;
     }
 
@@ -106,6 +144,19 @@ public class TrampleService
 
         int localIndex = MapUtil.Index3d(pos.X & 31, pos.Y & 31, pos.Z & 31, 32, 32);
         if (chunkTrampleData.Blocks.Remove(localIndex)) SaveChunkTrampleData(chunk, chunkTrampleData);
+    }
+
+    /// <summary>
+    /// Removes trample data for a specific block position. Verson for when you already loaded all relevant data via GetTrampleData() or ResolveTrampleData().
+    /// </summary>
+    /// <param name="api">Core server API.</param>
+    /// <param name="allTrampleData">All trample data.</param>
+    public static void RemoveTrampleData(ICoreServerAPI api, AllTrampleData allTrampleData, BlockPos pos)
+    {
+        if (allTrampleData.chunk == null || allTrampleData.chunkData == null) return; // No trample data, nothing to remove.
+
+        int localIndex = MapUtil.Index3d(pos.X & 31, pos.Y & 31, pos.Z & 31, 32, 32);
+        if (allTrampleData.chunkData.Blocks.Remove(localIndex)) SaveChunkTrampleData(allTrampleData.chunk, allTrampleData.chunkData);
     }
 
     // ////////////////////////////////////////////////////////////////////////

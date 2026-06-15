@@ -16,7 +16,12 @@ public class TrampleBlockCfg
     public float Durability { get; set; } = 10;
 
     /// <summary>
-    /// Regeneration of block. Specifies amount of in-game minutes needed for block to regenerate 1 durability point.
+    /// Regeneration of block. Specifies amount of in-game days needed for block to regenerate 1 durability point.
     /// </summary>
-    public float Regen { get; set; } = 10;
+    public float Regen { get; set; } = 0.1f;
+
+    /// <summary>
+    /// Durability ratio to apply when this block is placed due to trampling. Must be from 0 to 1.
+    /// </summary>
+    public float DurRatio { get; set; } = 0.5f;
 }

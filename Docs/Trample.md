@@ -10,6 +10,7 @@ Some trampled blocks cannot change back to original blocks. So grass on soil wil
 
 - `/ml trample active [on|off]`: Turn on/off Trample feature. You can skip `[on/off]`, will flip. If `off`, will completely disable mod, freezing state of trampling data.
 - `/ml trample allow [on|off]`: If `off`, mod will not reduce durability of blocks, but will still handle any existing trampling data.
+- `/ml trample debug`: Show debug info about trampling data of block player is currently standing on. Will show all data from `BlockTrampleData`.
 
 ## Configuration
 
@@ -25,10 +26,13 @@ Format of config file `maderland/trample.json`:
 
 Format for passable/impassable:
 
-- `Blocks`: Dictionary of blocks. Key is source block code, value is trampling data. Block code must be exact. Format of entry:
+- `Blocks`: Dictionary of blocks. Key (`FromBlockCode`) is source block code, value is trampling data. Block code must be exact. Format of entry:
   - `ToBlockCode`: Target block code. Can be empty if should remove block completely.
   - `Durability`: Durability of block. Walking on this block will reduce that number. If it hits 0, block changes to ToBlockCode.
-  - `Regen`: Regeneration of block. If block is not walked on, it will regenerate durability by this amount per second. If you want to disable regeneration, set it to 0.
+  - `Regen`: In-game days needed for block to fully regenerate all durability points from zero. Set to 0 to disable regeneration.
+  - `DurRatio`: Durability ratio to apply when this block is placed due to trampling.
+    For example, if block was placed in worldgen or due to player placing this block, its `Durability` will be same as in config and considered maximum.
+    But if this block was placed because previous block was fully trampled, `Durability` will be multiplied by this ratio.
 
 Example:
 ```
@@ -36,12 +40,14 @@ Example:
     "game:soil-sparse": {
       "ToBlockCode": "game:soil-verysparse",
       "Durability": 50.0,
-      "Regen": 10.0
+      "Regen": 10.0,
+      "DurRatio": 0.5
     },
     "game:soil-verysparse": {
       "ToBlockCode": "",
       "Durability": 50.0,
-      "Regen": 10.0
+      "Regen": 10.0,
+      "DurRatio": 0.5
     }
   }
 ```
@@ -54,10 +60,11 @@ Example:
       "FromBlockCode": "game:soil-*-normal",
       "ToBlockCode": "game:soil-*-sparse",
       "Durability": 50.0,
-      "Regen": 10.0
+      "Regen": 10.0,
+      "DurRatio": 0.5
     }
   ]
 ```
-Format of entry is same as `Blocks`, only difference is addition of `FromBlockCode` field. Note you can have ToBlockCode without wildcard (will replace all variants with same block) or empty (will remove block).
+Format of entry is same as `Blocks`, only difference is addition of `FromBlockCode` field. Note you can have `ToBlockCode` without wildcard (will replace all variants with same block) or empty (will remove block).
 
-You can specify special state where FromBlockCode is same as ToBlockCode. It won't change block, but will still reduce durability with all side effects like grass being unable to grow back.
+You can specify special state where `FromBlockCode` is same as `ToBlockCode`. It won't change block, but will still reduce durability with all side effects like grass being unable to grow back.
