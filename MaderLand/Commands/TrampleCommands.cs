@@ -1,10 +1,9 @@
 ﻿using MaderLand.Config.Trample;
 using MaderLand.Config.Utils;
 using MaderLand.Systems.Trample;
-using MaderLand.Systems.Trample.Data;
+using MaderLand.Systems.Trample.Network;
 using Vintagestory.API.Common;
 using Vintagestory.API.Config;
-using Vintagestory.API.MathTools;
 using Vintagestory.API.Server;
 
 namespace MaderLand.Commands;
@@ -27,8 +26,7 @@ public static class TrampleCommands
         {
             case "active": return Active(api, player, parameters);
             case "allow": return Allow(api, player, parameters);
-            case "check": return CheckBlock(player);
-            case "debug": return DebugBlock(api, player);
+            case "debug": return Debug(api, player, parameters);
             default:
                 return TextCommandResult.Error($"[Trample] Unknown action '{action}' for feature 'trample'!");
         }
@@ -113,49 +111,47 @@ public static class TrampleCommands
     }
 
     /// <summary>
-    /// Action: Check code of block player is standing on.
-    /// </summary>
-    /// <param name="player">Player that input this command.</param>
-    /// <returns>Result of command.</returns>
-    private static TextCommandResult CheckBlock(IServerPlayer player)
-    {
-        // Get the player's current block position (feet level).
-        BlockPos playerPos = player.Entity.Pos.AsBlockPos;
-        // Get the position directly beneath the player's feet.
-        BlockPos standingOnPos = playerPos.DownCopy();
-
-        // Get the block instance from the world.
-        Block standingOnBlock = player.Entity.World.BlockAccessor.GetBlock(standingOnPos);
-
-        // Construct the message with the block's code (e.g., game:dirt).
-        string message = $"[Trample] You are standing on: {standingOnBlock.Code} (ID: {standingOnBlock.Id})";
-
-        player.SendMessage(GlobalConstants.GeneralChatGroup, message, EnumChatType.CommandSuccess);
-        return TextCommandResult.Success();
-    }
-
-    /// <summary>
-    /// Action: Check trample data of block player is standing on. Creative mode is recommended as in this case player does not trample.
+    /// Action: turns debug mode on or off. If on, mod will show various debug information in GUI panel.
     /// </summary>
     /// <param name="api">Core server API.</param>
-    /// <param name="player">Player that input this command.</param>
+    /// <param name="player"></param>
+    /// <param name="parameters">All other parameters.</param>
     /// <returns>Result of command.</returns>
-    private static TextCommandResult DebugBlock(ICoreServerAPI api, IServerPlayer player)
+    private static TextCommandResult Debug(ICoreServerAPI api, IServerPlayer player, string? parameters)
     {
-        // Get the player's current block position (feet level).
-        BlockPos playerPos = player.Entity.Pos.AsBlockPos;
-        // Get the position directly beneath the player's feet.
-        BlockPos standingOnPos = playerPos.DownCopy();
-
-        string message = "[Trample] No trample data for block under you.";
-
-        BlockTrampleData? blockData = TrampleService.GetTrampleData(api, standingOnPos).blockData;
-        if (blockData != null)
-        {
-            message = $"[Trample] Trample data: Durability={blockData.Durability}, MaxDurability={blockData.MaxDurability}, Regen={blockData.Regen}, UpdatedAt={blockData.UpdatedAt}.";
+        if (parameters == null || parameters.Equals(""))
+        { // Just flip.
+            ConfigService.TrampleConfig.Debug = !ConfigService.TrampleConfig.Debug;
         }
+        else if (parameters.Equals("on"))
+        {
+            if (ConfigService.TrampleConfig.Debug)
+            {
+                player.SendMessage(GlobalConstants.GeneralChatGroup, "[Trample] Debug mode is already on!", EnumChatType.CommandSuccess);
+                return TextCommandResult.Success();
+            }
+            ConfigService.TrampleConfig.Debug = true;
+        }
+        else if (parameters.Equals("off"))
+        {
+            if (!ConfigService.TrampleConfig.Debug)
+            {
+                player.SendMessage(GlobalConstants.GeneralChatGroup, "[Trample] Debug mode is already off!", EnumChatType.CommandSuccess);
+                return TextCommandResult.Success();
+            }
+            ConfigService.TrampleConfig.Debug = false;
+        }
+        else return TextCommandResult.Error($"[Trample] Command '/ml trample debug': unknown parameter '{parameters}'!");
 
+        TrampleConfigHandler.Save(api);
+
+        // Show feedback in game console.
+        string message = "[Trample] Debug mode is now " + (ConfigService.TrampleConfig.Debug ? "on" : "off") + ".";
         player.SendMessage(GlobalConstants.GeneralChatGroup, message, EnumChatType.CommandSuccess);
+
+        // Show/hide debug window on client.
+        var channel = api.Network.GetChannel(TrampleConst.channelDebug);
+        channel?.SendPacket(new TrampleDebugPacket { Enabled = ConfigService.TrampleConfig.Debug }, player);
         return TextCommandResult.Success();
     }
 }

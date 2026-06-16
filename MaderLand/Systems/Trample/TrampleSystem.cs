@@ -1,14 +1,13 @@
 using MaderLand.Config.Trample;
 using MaderLand.Config.Utils;
-using MaderLand.Systems.Trample.Behaviors;
 using MaderLand.Systems.Trample.Data;
+using MaderLand.Systems.Trample.Gui;
+using MaderLand.Systems.Trample.Network;
 using System.Collections.Generic;
-using System.Threading;
+using Vintagestory.API.Client;
 using Vintagestory.API.Common;
-using Vintagestory.API.Config;
 using Vintagestory.API.MathTools;
 using Vintagestory.API.Server;
-using Vintagestory.API.Util;
 
 namespace MaderLand.Systems.Trample;
 
@@ -17,7 +16,9 @@ namespace MaderLand.Systems.Trample;
 /// </summary>
 public class TrampleSystem : ModSystem
 {
-    private ICoreServerAPI api = null!;
+    private ICoreServerAPI sapi = null!;
+    private ICoreClientAPI capi = null!;
+    private IServerNetworkChannel serverChannel = null!;
 
     /// <summary>
     /// Map of all player positions. Key is PlayerUID, Value is block position.
@@ -31,9 +32,11 @@ public class TrampleSystem : ModSystem
     /// <returns>True if it should load, false otherwise.</returns>
     public override bool ShouldLoad(EnumAppSide side)
     {
-        // Trample feature is server-side mod.
-        return side == EnumAppSide.Server;
+        // Trample feature is server-side mod, but it uses debug window for client GUI.
+        return true;
     }
+
+    //
 
     /// <summary>
     /// Starts the mod system on the server side.
@@ -42,15 +45,16 @@ public class TrampleSystem : ModSystem
     public override void StartServerSide(ICoreServerAPI serverApi)
     {
         base.StartServerSide(serverApi);
-        api = serverApi;
+        sapi = serverApi;
 
-        TrampleInitializer.AppendHandleBehavior(api);
+        TrampleInitializer.AppendHandleBehavior(sapi);
 
         // Register game tick listener running every 100ms.
-        api.Event.RegisterGameTickListener(ProcessTrampling, 100);
-        api.Event.PlayerLeave += OnPlayerGone;
-        api.Event.PlayerDisconnect += OnPlayerGone;
+        sapi.Event.RegisterGameTickListener(ProcessTrampling, 100);
+        sapi.Event.PlayerLeave += OnPlayerGone;
+        sapi.Event.PlayerDisconnect += OnPlayerGone;
 
+        serverChannel = sapi.Network.RegisterChannel(TrampleConst.channelDebug).RegisterMessageType<TrampleDebugPacket>();
     }
 
     /// <summary>
@@ -62,6 +66,34 @@ public class TrampleSystem : ModSystem
         lastPlayerPositions.Remove(player.PlayerUID);
     }
 
+    //
+
+    /// <summary>
+    /// Starts the mod system on the client side.
+    /// </summary>
+    /// <param name="api">Core Client API</param>
+    public override void StartClientSide(ICoreClientAPI api)
+    {
+        capi = api;
+        api.Network.RegisterChannel(TrampleConst.channelDebug).RegisterMessageType<TrampleDebugPacket>()
+            .SetMessageHandler<TrampleDebugPacket>(ReactOnDebugPacket);
+
+        if (ConfigService.TrampleConfig.Debug)
+        { // Debug active, already open debug window.
+            GuiPanels.GetDebug(capi).TryOpen();
+        }
+    }
+
+    /// <summary>
+    /// Reacts on debug packet.
+    /// </summary>
+    /// <param name="packet">Debug packet.</param>
+    private void ReactOnDebugPacket(TrampleDebugPacket packet)
+    {
+        if (packet.Enabled) GuiPanels.GetDebug(capi).TryOpen();
+        else GuiPanels.GetDebug(capi).TryClose();
+    }
+
     // ////////////////////////////////////////////////////////////////////////
 
     /// <summary>
@@ -71,10 +103,10 @@ public class TrampleSystem : ModSystem
     private void ProcessTrampling(float dt)
     {
         // Only run detection if the trample feature is active or allowed in the configuration
-        if (api == null || !ConfigService.TrampleConfig.Active || !ConfigService.TrampleConfig.Allow) return;
+        if (sapi == null || !ConfigService.TrampleConfig.Active || !ConfigService.TrampleConfig.Allow) return;
 
         // Go over all players...
-        foreach (IPlayer player in api.World.AllOnlinePlayers)
+        foreach (IPlayer player in sapi.World.AllOnlinePlayers)
         {
             CheckPlayerMove((IServerPlayer)player);
         }
@@ -141,12 +173,12 @@ public class TrampleSystem : ModSystem
     /// <param name="posPlayer">Position of that player.</param>
     private void TrampleLogic(IServerPlayer player, BlockPos posPlayer)
     {
-        Block blockPlayer = api.World.BlockAccessor.GetBlock(posPlayer);
+        Block blockPlayer = sapi.World.BlockAccessor.GetBlock(posPlayer);
         BlockPos posUnder = posPlayer.DownCopy();
-        Block blockUnder = api.World.BlockAccessor.GetBlock(posUnder);
+        Block blockUnder = sapi.World.BlockAccessor.GetBlock(posUnder);
 
         string message = $"[Trample] Player {player.PlayerName} walked to new block: {blockPlayer.Code} at {posPlayer}. Block under: {blockUnder.Code}.";
-        api.Logger.Notification(message); // DEBUG
+        sapi.Logger.Notification(message); // DEBUG
 
         // We can trample grass and similar stuff that can be walked through by players.
         bool result = TryTrampleBlock(blockPlayer, posPlayer, true);
@@ -164,13 +196,13 @@ public class TrampleSystem : ModSystem
     /// <returns>True if we can check block underneath next. Matters only for passable blocks.</returns>
     private bool TryTrampleBlock(Block block, BlockPos pos, bool passable)
     {
-        TrampleBlockCfg? trampleBlockCfg = TrampleService.GetTrampleConfig(api, block, passable);
+        TrampleBlockCfg? trampleBlockCfg = TrampleService.GetTrampleConfig(sapi, block, passable);
         if (trampleBlockCfg == null) return true; // No trample config for this block, skip.
 
-        AllTrampleData allTrampleData = TrampleService.ResolveBlockTrampleData(api, trampleBlockCfg, pos);
+        AllTrampleData allTrampleData = TrampleService.ResolveBlockTrampleData(sapi, trampleBlockCfg, pos);
         if (!allTrampleData.IsValid()) return true;
 
-        TrampleService.DeltaTrampleData(api, allTrampleData.blockData);
+        TrampleService.DeltaTrampleData(sapi, allTrampleData.blockData, pos);
         Block? replacementBlock = TrampleBlock(trampleBlockCfg, allTrampleData.blockData, block, pos);
 
         if (replacementBlock != null) RefreshTrampleData(allTrampleData, replacementBlock, pos, passable);
@@ -194,7 +226,7 @@ public class TrampleSystem : ModSystem
         float tramplePower = ResolveTramplePower();
 
         string message = $"[Trample] Block '{block.Code}' at {pos} will be trampled. Durability: {blockTrampleData.Durability}. Power: {tramplePower}.";
-        api.Logger.Notification(message); // DEBUG
+        sapi.Logger.Notification(message); // DEBUG
 
         // Trample this block.
         blockTrampleData.Durability -= tramplePower; // Most important line in whole feature, this is where the block actually gets trampled.
@@ -208,11 +240,11 @@ public class TrampleSystem : ModSystem
             if (nextBlock == null) return null; // Unknown next block, skip.
 
             // Replace current block with next block.
-            api.World.BlockAccessor.ExchangeBlock(nextBlock.BlockId, pos); // Will NOT trigger TrampleBehavior.OnBlockRemoved().
-            api.World.BlockAccessor.MarkBlockDirty(pos);
+            sapi.World.BlockAccessor.ExchangeBlock(nextBlock.BlockId, pos); // Will NOT trigger TrampleBehavior.OnBlockRemoved().
+            sapi.World.BlockAccessor.MarkBlockDirty(pos);
 
             string message1 = $"[Trample] Block '{block.Code}' at {pos} was fully trampled and replaced with '{nextBlock.Code}'.";
-            api.Logger.Notification(message1); // DEBUG
+            sapi.Logger.Notification(message1); // DEBUG
 
             // We will handle updating trample data for this block in RefreshTrampleData() after this function returns.
             return nextBlock;
@@ -243,22 +275,22 @@ public class TrampleSystem : ModSystem
     /// <param name="pos">Position of block.</param>
     private void RefreshTrampleData(AllTrampleData allTrampleData, Block replacementBlock, BlockPos pos, bool passable)
     {
-        TrampleBlockCfg? replacementTrampleBlockCfg = TrampleService.GetTrampleConfig(api, replacementBlock, passable);
+        TrampleBlockCfg? replacementTrampleBlockCfg = TrampleService.GetTrampleConfig(sapi, replacementBlock, passable);
         if (replacementTrampleBlockCfg == null)
         { // No trample config for this block, remove trample data completely.
             int localIndex = MapUtil.Index3d(pos.X & 31, pos.Y & 31, pos.Z & 31, 32, 32);
             allTrampleData.chunkData.Blocks.Remove(localIndex);
 
             string message1 = $"[Trample] Replacement block '{replacementBlock.Code}' cannot be trampled. Removing trample data.";
-            api.Logger.Notification(message1); // DEBUG
+            sapi.Logger.Notification(message1); // DEBUG
             return;
         }
 
         string message = $"[Trample] Replacement block '{replacementBlock.Code}' can be trampled. Resetting trample data.";
-        api.Logger.Notification(message); // DEBUG
+        sapi.Logger.Notification(message); // DEBUG
 
         // Note we reduce durability of blocks placed due to trampling.
-        allTrampleData.blockData.Reset(replacementTrampleBlockCfg, api.World.Calendar.TotalDays);
+        allTrampleData.blockData.Reset(replacementTrampleBlockCfg, sapi.World.Calendar.TotalDays);
         allTrampleData.blockData.Durability *= replacementTrampleBlockCfg.DurRatio;
     }
 
@@ -277,9 +309,9 @@ public class TrampleSystem : ModSystem
         if (toBlockCode == "") toBlockCode = TrampleConst.emptyBlock;
 
         AssetLocation loc = new(toBlockCode);
-        Block? nextBlock = api.World.GetBlock(loc);
+        Block? nextBlock = sapi.World.GetBlock(loc);
         if (nextBlock == null)
-            api.Logger.Error($"[Trample] Failed to get block with code '{toBlockCode}' when trying to trample block '{block.Code}' at {pos}. Make sure the block code in config is correct.");
+            sapi.Logger.Error($"[Trample] Failed to get block with code '{toBlockCode}' when trying to trample block '{block.Code}' at {pos}. Make sure the block code in config is correct.");
 
         return nextBlock;
     }

@@ -110,9 +110,30 @@ public class TrampleService
     /// </summary>
     /// <param name="api">Core server API.</param>
     /// <param name="blockTrampleData">Updated trample data for given block.</param>
-    public static void DeltaTrampleData(ICoreServerAPI api, BlockTrampleData blockTrampleData)
+    public static void DeltaTrampleData(ICoreServerAPI api, BlockTrampleData blockTrampleData, BlockPos pos)
     {
-        // TODO actually apply detla: check current time, compare to time in UpdatedAt and Regen to know how much durability to bring back
+        double CurrTime = api.World.Calendar.TotalDays;
+        double PassedTime = CurrTime - blockTrampleData.UpdatedAt;
+
+        Block block = api.World.BlockAccessor.GetBlock(pos);
+        string message = $"[Trample] DeltaTrampleData(). Block: pos='{pos}', code='{block.Code}'. CurrTime={CurrTime}, PassedTime={PassedTime}.\r\n  blockTrampleData: Durability={blockTrampleData.Durability}, MaxDurability={blockTrampleData.MaxDurability}, Regen={blockTrampleData.Regen}, UpdatedAt={blockTrampleData.UpdatedAt}.";
+        api.Logger.Notification(message); // DEBUG
+
+        blockTrampleData.UpdatedAt = CurrTime;
+        float DurRegen = blockTrampleData.MaxDurability * (float)PassedTime / blockTrampleData.Regen;
+        blockTrampleData.Durability += DurRegen;
+
+        if (blockTrampleData.Durability >= blockTrampleData.MaxDurability)
+        {
+            string message1 = $"[Trample] DeltaTrampleData(). FULLY regenerated! DurRegen={DurRegen}, new blockTrampleData.Durability={blockTrampleData.Durability}.";
+            api.Logger.Notification(message1); // DEBUG
+            blockTrampleData.Durability = blockTrampleData.MaxDurability;
+        }
+        else
+        {
+            string message2 = $"[Trample] DeltaTrampleData(). Partially regenerated! DurRegen={DurRegen}, new blockTrampleData.Durability={blockTrampleData.Durability}.";
+            api.Logger.Notification(message2); // DEBUG
+        }
     }
 
     //
@@ -239,7 +260,7 @@ public class TrampleService
     {
         ChunkTrampleData? trampleData = null;
         // Try to get existing data, otherwise initialize a new one (if can).
-        byte[] rawData = chunk.GetServerModdata(TrampleConst.trampleDataKey);
+        byte[] rawData = chunk.GetServerModdata(TrampleConst.dataChunkKey);
 
         if (rawData != null) trampleData = SerializerUtil.Deserialize<ChunkTrampleData>(rawData);
         else if (create) trampleData = new ChunkTrampleData();
@@ -256,7 +277,7 @@ public class TrampleService
     {
         // Serialize and save back to chunk.
         byte[] serializedBytes = SerializerUtil.Serialize(chunkTrampleData);
-        chunk.SetServerModdata(TrampleConst.trampleDataKey, serializedBytes);
+        chunk.SetServerModdata(TrampleConst.dataChunkKey, serializedBytes);
 
         // Mark the chunk dirty so the save system knows to write it to disk.
         chunk.MarkModified();

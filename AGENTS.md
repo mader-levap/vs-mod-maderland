@@ -8,6 +8,10 @@ AI agent context file for the MaderLand Vintage Story mod project.
 
 GitHub: https://github.com/mader-levap/vs-mod-maderland
 
+### Features
+
+- **Trample**: just by walking, you can wear out pathes and trails through terrain. In development.
+
 ## Tech Stack
 
 - Language: C# (.NET 10)
@@ -41,9 +45,11 @@ MaderLand/
 
 ### Commands
 - There is main command `/ml` (short for `maderland`). Format: `/ml [feature] [action] [all other parameters, optional]`
-- Each feature has subcommand, for example Trails feature has `/ml trails`.
-- Each feature has one or more actions. Example: `/ml trails check`.
-- All features have at least one action `active` that is used to turn whole feature on or off. Example: `/ml trails active off`.
+- Each feature has subcommand, for example Trails feature has `/ml trample`.
+- Each feature has one or more actions. Example: `/ml trample check`.
+- All features have at least these actions below:
+  - action `active` that is used to turn whole feature on or off. Example: `/ml trample active off`.
+  - action `debug` that is used to turn debug mode for this feature on or off. Example: `/ml trample debug on`.
 
 ### Configuration
 - Code loads/saves/creates configuration via generic `ModConfigHandler` class.

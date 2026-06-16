@@ -25,7 +25,7 @@ public class BlockSoilDepositTrampleable : BlockSoilDeposit
         AllTrampleData allTrampleData = TrampleService.GetTrampleData(api, pos);
         if (allTrampleData.blockData != null)
         {
-            TrampleService.DeltaTrampleData(api, allTrampleData.blockData);
+            TrampleService.DeltaTrampleData(api, allTrampleData.blockData, pos);
 
             if (allTrampleData.blockData.Durability >= allTrampleData.blockData.MaxDurability)
             { // Block fully recovered from trampling, remove trample data.

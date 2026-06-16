@@ -26,4 +26,4 @@ Config files are located in `ModConfig/maderland/` after first launch. Every fea
 
 ## License
 
-MIT
+MIT. See `LICENSE` file.

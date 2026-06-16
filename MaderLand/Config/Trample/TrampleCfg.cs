@@ -18,6 +18,11 @@ public class TrampleCfg
     public bool Allow { get; set; } = true;
 
     /// <summary>
+    /// Is debug mode active?
+    /// </summary>
+    public bool Debug { get; set; } = false;
+
+    /// <summary>
     /// Trampling data.
     /// </summary>
     public TramplePowerCfg Power { get; set; } = new TramplePowerCfg();

@@ -10,7 +10,7 @@ Some trampled blocks cannot change back to original blocks. So grass on soil wil
 
 - `/ml trample active [on|off]`: Turn on/off Trample feature. You can skip `[on/off]`, will flip. If `off`, will completely disable mod, freezing state of trampling data.
 - `/ml trample allow [on|off]`: If `off`, mod will not reduce durability of blocks, but will still handle any existing trampling data.
-- `/ml trample debug`: Show debug info about trampling data of block player is currently standing on. Will show all data from `BlockTrampleData`.
+- `/ml trample debug [on|off]`: If `on`, mod will show various debug information in window.
 
 ## Configuration
 
@@ -21,7 +21,7 @@ Format of config file `maderland/trample.json`:
   - `PlayerBarefoot`: How powerful is walking barefoot. Note: completely destroyed shoes/boots count as barefoot.
   - `PlayerShoes`: How powerful is walking using shoes.
   - `PlayerArmored`: How powerful is walking using armored boots.
-- `Passable`: two lists of passable blocks, like `game:tallgrass-medium-free`.
+- `Passable`: two lists of passable blocks, like `game:tallgrass-medium-*`.
 - `Impassable`: two lists of impassable blocks, like `game:soil-*-normal`.
 
 Format for passable/impassable:
