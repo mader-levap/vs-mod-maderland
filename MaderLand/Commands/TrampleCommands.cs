@@ -150,7 +150,7 @@ public static class TrampleCommands
         player.SendMessage(GlobalConstants.GeneralChatGroup, message, EnumChatType.CommandSuccess);
 
         // Show/hide debug window on client.
-        var channel = api.Network.GetChannel(TrampleConst.channelDebug);
+        var channel = api.Network.GetChannel(TrampleConst.channelKey);
         channel?.SendPacket(new TrampleDebugPacket { Enabled = ConfigService.TrampleConfig.Debug }, player);
         return TextCommandResult.Success();
     }

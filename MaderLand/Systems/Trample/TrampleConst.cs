@@ -12,9 +12,14 @@ public static class TrampleConst
     // ////////////////////////////////////////////////////////////////////////
 
     /// <summary>
-    /// The unique channel name used to send debug data between server and client.
+    /// Render key used to register renderer "BlockSelectionWatcher".
     /// </summary>
-    public const string channelDebug = "maderland-trample-debug";
+    public const string renderWatcherKey = "maderland-trample-watcher";
+
+    /// <summary>
+    /// The unique channel name used to send trample-related data between server and client.
+    /// </summary>
+    public const string channelKey = "maderland-trample";
 
     /// <summary>
     /// The unique data name used to store trample data in chunk mod data.

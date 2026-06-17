@@ -22,6 +22,6 @@ public class TrampleBehavior(ICoreServerAPI api, Block block) : BlockBehavior(bl
     {
         if (!ConfigService.TrampleConfig.Active) return; // Only run behavior if the trample feature is active in the configuration.
 
-        TrampleService.RemoveTrampleData(api, blockPos);
+        TramplUtils.RemoveTrampleData(api, blockPos);
     }
 }

@@ -6,6 +6,8 @@ When player walks on block, mod checks if that block is in config. If it is, it 
 
 Some trampled blocks cannot change back to original blocks. So grass on soil will not regrow as long as trample data is present and Durability is not at max.
 
+Blocks can regenerate and recover, allowing them to act normally, like growing grass on soil.
+
 ## Commands
 
 - `/ml trample active [on|off]`: Turn on/off Trample feature. You can skip `[on/off]`, will flip. If `off`, will completely disable mod, freezing state of trampling data.
