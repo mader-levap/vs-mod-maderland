@@ -1,4 +1,5 @@
 ﻿using MaderLand.Systems.Trample;
+using System.Collections.Generic;
 
 namespace MaderLand.Config.Trample;
 
@@ -23,9 +24,9 @@ public class TrampleCfg
     public bool Debug { get; set; } = false;
 
     /// <summary>
-    /// Trampling data.
+    /// Who can trample and how?
     /// </summary>
-    public TramplePowerCfg Power { get; set; } = new TramplePowerCfg();
+    public List<TrampleEntityCfg> Entities { get; set; } = [];
 
     /// <summary>
     /// Passable blocks are blocks that can be walked through and being above impassable block. Grass, bush, flowers, etc.

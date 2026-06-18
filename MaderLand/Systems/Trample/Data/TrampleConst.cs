@@ -1,6 +1,7 @@
 ﻿using MaderLand.Config.Trample;
+using System.Collections.Generic;
 
-namespace MaderLand.Systems.Trample;
+namespace MaderLand.Systems.Trample.Data;
 
 /// <summary>
 /// Constants for Trample feature.
@@ -32,6 +33,28 @@ public static class TrampleConst
     public const string emptyBlock = "game:air";
 
     //
+
+    /// <summary>
+    /// Default entities that should be able to trample blocks.
+    /// Besides player, all larger animals are added.
+    /// </summary>
+    public static readonly List<TrampleEntityCfg> DefaultEntities = [
+        // humanoid
+        new() { EntityCode = "game:player", Power = 1, FallMul = 2 },
+        new() { EntityCode = "game:trader-*-*-*", Power = 1, FallMul = 2 },
+
+        // medium animals
+        new() { EntityCode = "game:wolf-*-adult-*", Power = 1, FallMul = 2 },
+        new() { EntityCode = "game:pig-*-adult-*", Power = 1, FallMul = 2 },
+        new() { EntityCode = "game:sheep-*-adult-*", Power = 1, FallMul = 2 },
+        new() { EntityCode = "game:deer-*-adult-*", Power = 1, FallMul = 2 },
+        new() { EntityCode = "game:goat-*-adult-*", Power = 1, FallMul = 2 },
+
+        // large animals
+        new() { EntityCode = "game:bear-*-adult-*", Power = 3, FallMul = 2 },
+
+        // rust world denizens
+    ];
 
     /// <summary>
     /// Default configuration for passable blocks affected by trampling.
@@ -92,6 +115,7 @@ public static class TrampleConst
     /// </summary>
     public static readonly TrampleCfg DefaultTrampleCfg = new()
     {
+        Entities = DefaultEntities,
         Passable = DefaultPassable,
         Impassable = DefaultImpassable,
     };

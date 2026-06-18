@@ -1,14 +1,11 @@
 ﻿using MaderLand.Config.Trample;
 using MaderLand.Config.Utils;
 using MaderLand.Systems.Trample.Data;
-using System;
-using System.Collections.Generic;
-using System.Text;
 using Vintagestory.API.Common;
 using Vintagestory.API.MathTools;
 using Vintagestory.API.Server;
 
-namespace MaderLand.Systems.Trample;
+namespace MaderLand.Systems.Trample.Services;
 
 /// <summary>
 /// Main trample service class. It is executed on server.
@@ -18,19 +15,18 @@ public class TrampleService(ICoreServerAPI sapi)
     /// <summary>
     /// Perform block trampling logic.
     /// </summary>
-    /// <param name="player">Server player.</param>
-    /// <param name="posPlayer">Position of that player.</param>
-    public void TrampleLogic(IServerPlayer player, BlockPos posPlayer)
+    /// <param name="entry">Entry about entity that can trample stuff.</param>
+    public void TrampleLogic(EntityTrampleEntry entry)
     {
-        Block blockPlayer = sapi.World.BlockAccessor.GetBlock(posPlayer);
-        BlockPos posUnder = posPlayer.DownCopy();
+        Block blockEntity = sapi.World.BlockAccessor.GetBlock(entry.LastPos);
+        BlockPos posUnder = entry.LastPos.DownCopy();
         Block blockUnder = sapi.World.BlockAccessor.GetBlock(posUnder);
 
-        string message = $"[Trample] Player {player.PlayerName} walked to new block: {blockPlayer.Code} at {posPlayer}. Block under: {blockUnder.Code}.";
+        string message = $"[Trample] Entity '{entry.Name}' walked to new block: {blockEntity.Code} at {entry.LastPos}. Block under: {blockUnder.Code}.";
         sapi.Logger.Notification(message); // DEBUG
 
         // We can trample grass and similar stuff that can be walked through by players.
-        bool result = TryTrampleBlock(blockPlayer, posPlayer, true);
+        bool result = TryTrampleBlock(blockEntity, entry.LastPos, true);
         // If result is ok (like grass fully trampled), try to trample block under player.
         if (result) TryTrampleBlock(blockUnder, posUnder, false);
     }
@@ -45,18 +41,18 @@ public class TrampleService(ICoreServerAPI sapi)
     /// <returns>True if we can check block underneath next. Matters only for passable blocks.</returns>
     private bool TryTrampleBlock(Block block, BlockPos pos, bool passable)
     {
-        TrampleBlockCfg? trampleBlockCfg = TramplUtils.GetTrampleConfig(sapi, block, passable);
+        TrampleBlockCfg? trampleBlockCfg = TrampleUtils.GetTrampleConfig(sapi, block, passable);
         if (trampleBlockCfg == null) return true; // No trample config for this block, skip.
 
-        AllTrampleData allTrampleData = TramplUtils.ResolveBlockTrampleData(sapi, trampleBlockCfg, pos);
+        AllTrampleData allTrampleData = TrampleUtils.ResolveBlockTrampleData(sapi, trampleBlockCfg, pos);
         if (!allTrampleData.IsValid()) return true;
 
-        TramplUtils.DeltaTrampleData(sapi, allTrampleData.blockData, pos);
+        TrampleUtils.DeltaTrampleData(sapi, allTrampleData.blockData, pos);
         Block? replacementBlock = TrampleBlock(trampleBlockCfg, allTrampleData.blockData, block, pos);
 
         if (replacementBlock != null) RefreshTrampleData(allTrampleData, replacementBlock, pos, passable);
 
-        TramplUtils.SaveChunkTrampleData(allTrampleData.chunk, allTrampleData.chunkData);
+        TrampleUtils.SaveChunkTrampleData(allTrampleData.chunk, allTrampleData.chunkData);
         return false; // Block was trampled, we skip checking block underneath.
     }
 
@@ -109,9 +105,9 @@ public class TrampleService(ICoreServerAPI sapi)
     /// <returns>Trample power.</returns>
     private static float ResolveTramplePower()
     {
-        TramplePowerCfg TramplePower = ConfigService.TrampleConfig.Power;
-        // TODO actually resolve trampling power of player, for now just assume everyone is barefoot and has same trample power.
-        return TramplePower.PlayerBarefoot;
+        TrampleEntityCfg Entity = ConfigService.TrampleConfig.Entities[0];
+        // TODO actually resolve trampling power of given entity, for now just assume everyone is barefoot and has same trample power.
+        return Entity.Power;
     }
 
     /// <summary>
@@ -124,9 +120,9 @@ public class TrampleService(ICoreServerAPI sapi)
     /// <param name="pos">Position of block.</param>
     private void RefreshTrampleData(AllTrampleData allTrampleData, Block replacementBlock, BlockPos pos, bool passable)
     {
-        TrampleBlockCfg? replacementTrampleBlockCfg = TramplUtils.GetTrampleConfig(sapi, replacementBlock, passable);
+        TrampleBlockCfg? replacementTrampleBlockCfg = TrampleUtils.GetTrampleConfig(sapi, replacementBlock, passable);
         if (replacementTrampleBlockCfg == null)
-        { // No trample config for this block, remove trample data completely.
+        {   // No trample config for this block, remove trample data completely.
             int localIndex = MapUtil.Index3d(pos.X & 31, pos.Y & 31, pos.Z & 31, 32, 32);
             allTrampleData.chunkData.Blocks.Remove(localIndex);
 

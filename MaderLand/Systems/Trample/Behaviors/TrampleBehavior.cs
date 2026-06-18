@@ -1,4 +1,5 @@
 ﻿using MaderLand.Config.Utils;
+using MaderLand.Systems.Trample.Services;
 using Vintagestory.API.Common;
 using Vintagestory.API.MathTools;
 using Vintagestory.API.Server;
@@ -22,6 +23,6 @@ public class TrampleBehavior(ICoreServerAPI api, Block block) : BlockBehavior(bl
     {
         if (!ConfigService.TrampleConfig.Active) return; // Only run behavior if the trample feature is active in the configuration.
 
-        TramplUtils.RemoveTrampleData(api, blockPos);
+        TrampleUtils.RemoveTrampleData(api, blockPos);
     }
 }

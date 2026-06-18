@@ -2,17 +2,16 @@
 using MaderLand.Config.Utils;
 using MaderLand.Systems.Trample.Data;
 using Vintagestory.API.Common;
-using Vintagestory.API.Config;
 using Vintagestory.API.MathTools;
 using Vintagestory.API.Server;
 using Vintagestory.API.Util;
 
-namespace MaderLand.Systems.Trample;
+namespace MaderLand.Systems.Trample.Services;
 
 /// <summary>
 /// Utility functions for handling trample data. It provides methods to set, get and remove trample data for blocks, as well as load and save trample data associated with chunks.
 /// </summary>
-public class TramplUtils
+public class TrampleUtils
 {
     /// <summary>
     /// Add trample data for a given block as is, without any modifications. Will not touch already existing trample data.
@@ -74,7 +73,7 @@ public class TramplUtils
 
         int localIndex = MapUtil.Index3d(pos.X & 31, pos.Y & 31, pos.Z & 31, 32, 32);
         if (!allTrampleData.chunkData.Blocks.TryGetValue(localIndex, out BlockTrampleData? blockData))
-        { // No existing trample data for this block, create new one and write to chunk data.
+        {   // No existing trample data for this block, create new one and write to chunk data.
             allTrampleData.blockData = CreateBlockTrampleData(api, trampleBlockCfg);
             allTrampleData.chunkData.Blocks[localIndex] = allTrampleData.blockData;
         } else
@@ -114,6 +113,7 @@ public class TramplUtils
     {
         double CurrTime = api.World.Calendar.TotalDays;
         double PassedTime = CurrTime - blockTrampleData.UpdatedAt;
+        if (PassedTime == 0) return; // No time passed, do not regenerate anything yet.
 
         Block block = api.World.BlockAccessor.GetBlock(pos);
         string message = $"[Trample] DeltaTrampleData(). Block: pos='{pos}', code='{block.Code}'. CurrTime={CurrTime}, PassedTime={PassedTime}.\r\n  blockTrampleData: Durability={blockTrampleData.Durability}, MaxDurability={blockTrampleData.MaxDurability}, Regen={blockTrampleData.Regen}, UpdatedAt={blockTrampleData.UpdatedAt}.";

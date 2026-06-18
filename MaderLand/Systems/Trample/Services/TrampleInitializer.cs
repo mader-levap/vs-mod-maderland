@@ -7,7 +7,7 @@ using Vintagestory.API.Common;
 using Vintagestory.API.Server;
 using Vintagestory.API.Util;
 
-namespace MaderLand.Systems.Trample;
+namespace MaderLand.Systems.Trample.Services;
 
 /// <summary>
 /// Initializer for the trample system. It can be used to set up any necessary data structures, register block behaviors, etc.

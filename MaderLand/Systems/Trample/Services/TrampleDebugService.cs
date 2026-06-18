@@ -8,7 +8,7 @@ using System.Text;
 using Vintagestory.API.Client;
 using Vintagestory.API.Server;
 
-namespace MaderLand.Systems.Trample;
+namespace MaderLand.Systems.Trample.Services;
 
 /// <summary>
 /// Handles debugging.
@@ -50,7 +50,7 @@ public class TrampleDebugService
     {
         // Client asked for trample data.
         AllTrampleData? allTrampleData = null;
-        if (packet.Pos != null) allTrampleData = TramplUtils.GetTrampleData(sapi, packet.Pos);
+        if (packet.Pos != null) allTrampleData = TrampleUtils.GetTrampleData(sapi, packet.Pos);
 
         // Send requested data back to client.
         var channel = sapi.Network.GetChannel(TrampleConst.channelKey);

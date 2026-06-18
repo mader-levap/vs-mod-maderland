@@ -1,5 +1,6 @@
 ﻿using MaderLand.Config.Utils;
 using MaderLand.Systems.Trample.Data;
+using MaderLand.Systems.Trample.Services;
 using Vintagestory.API.Common;
 using Vintagestory.API.MathTools;
 using Vintagestory.API.Server;
@@ -21,14 +22,14 @@ public class BlockSoilTrampleable : BlockSoil
         }
 
         ICoreServerAPI api = (ICoreServerAPI)world.Api;
-        AllTrampleData allTrampleData = TramplUtils.GetTrampleData(api, pos);
+        AllTrampleData allTrampleData = TrampleUtils.GetTrampleData(api, pos);
         if (allTrampleData.blockData != null)
         {
-            TramplUtils.DeltaTrampleData(api, allTrampleData.blockData, pos);
+            TrampleUtils.DeltaTrampleData(api, allTrampleData.blockData, pos);
 
             if (allTrampleData.blockData.Durability >= allTrampleData.blockData.MaxDurability)
-            { // Block fully recovered from trampling, remove trample data.
-                TramplUtils.RemoveTrampleData(api, allTrampleData, pos);
+            {   // Block fully recovered from trampling, remove trample data.
+                TrampleUtils.RemoveTrampleData(api, allTrampleData, pos);
             } else return; // Do not allow grass to grow if the soil is trampled.
         }
 

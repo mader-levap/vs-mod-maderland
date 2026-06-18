@@ -1,4 +1,4 @@
-﻿using MaderLand.Systems.Trample;
+﻿using MaderLand.Systems.Trample.Services;
 using Vintagestory.API.Common;
 
 namespace MaderLand.Systems.Manager;

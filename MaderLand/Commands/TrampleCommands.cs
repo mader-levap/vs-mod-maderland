@@ -1,6 +1,6 @@
 ﻿using MaderLand.Config.Trample;
 using MaderLand.Config.Utils;
-using MaderLand.Systems.Trample;
+using MaderLand.Systems.Trample.Data;
 using MaderLand.Systems.Trample.Network;
 using Vintagestory.API.Common;
 using Vintagestory.API.Config;
@@ -42,7 +42,7 @@ public static class TrampleCommands
     private static TextCommandResult Active(ICoreServerAPI api, IServerPlayer player, string? parameters)
     {
         if (parameters == null || parameters.Equals(""))
-        { // Just flip.
+        {   // Just flip.
             ConfigService.TrampleConfig.Active = !ConfigService.TrampleConfig.Active;
         }
         else if (parameters.Equals("on"))
@@ -81,7 +81,7 @@ public static class TrampleCommands
     private static TextCommandResult Allow(ICoreServerAPI api, IServerPlayer player, string? parameters)
     {
         if (parameters == null || parameters.Equals(""))
-        { // Just flip.
+        {   // Just flip.
             ConfigService.TrampleConfig.Allow = !ConfigService.TrampleConfig.Allow;
         }
         else if (parameters.Equals("on"))
@@ -120,7 +120,7 @@ public static class TrampleCommands
     private static TextCommandResult Debug(ICoreServerAPI api, IServerPlayer player, string? parameters)
     {
         if (parameters == null || parameters.Equals(""))
-        { // Just flip.
+        {   // Just flip.
             ConfigService.TrampleConfig.Debug = !ConfigService.TrampleConfig.Debug;
         }
         else if (parameters.Equals("on"))

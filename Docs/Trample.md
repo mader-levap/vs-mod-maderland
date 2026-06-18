@@ -19,10 +19,10 @@ Blocks can regenerate and recover, allowing them to act normally, like growing g
 Format of config file `maderland/trample.json`:
 
 - `Active`: Can turn on/off Trample feature.
-- `Power`: Power of trampling. All of these will lower Durability of blocks.
-  - `PlayerBarefoot`: How powerful is walking barefoot. Note: completely destroyed shoes/boots count as barefoot.
-  - `PlayerShoes`: How powerful is walking using shoes.
-  - `PlayerArmored`: How powerful is walking using armored boots.
+- `Entities`: List of entities that can trample blocks. Each entry contains these fields:
+  - `EntityCode`: Code of entity. You can use wildcards.
+  - `Power`: How powerful is walking onto block.
+  - `FallMul`: Multiplier for additional trampling power generated due to fall. Set 0 if you do not want any additional power.
 - `Passable`: two lists of passable blocks, like `game:tallgrass-medium-*`.
 - `Impassable`: two lists of impassable blocks, like `game:soil-*-normal`.
 
