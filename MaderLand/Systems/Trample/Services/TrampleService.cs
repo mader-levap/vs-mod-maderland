@@ -1,5 +1,5 @@
-﻿using MaderLand.Config.Trample;
-using MaderLand.Config.Utils;
+﻿using MaderLand.Common.Config;
+using MaderLand.Systems.Trample.Config;
 using MaderLand.Systems.Trample.Data;
 using Vintagestory.API.Common;
 using Vintagestory.API.MathTools;

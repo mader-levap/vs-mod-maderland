@@ -1,7 +1,7 @@
 ﻿using MaderLand.Systems.Trample.Services;
 using Vintagestory.API.Common;
 
-namespace MaderLand.Systems.Manager;
+namespace MaderLand.Common.Manager;
 
 /// <summary>
 /// Manager for handling features of the mod.

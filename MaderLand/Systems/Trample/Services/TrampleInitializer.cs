@@ -1,8 +1,8 @@
-﻿using MaderLand.Config.Trample;
-using MaderLand.Config.Utils;
-using MaderLand.Systems.Manager;
+﻿using MaderLand.Common.Config;
+using MaderLand.Common.Manager;
 using MaderLand.Systems.Trample.Behaviors;
 using MaderLand.Systems.Trample.Blocks;
+using MaderLand.Systems.Trample.Config;
 using Vintagestory.API.Common;
 using Vintagestory.API.Server;
 using Vintagestory.API.Util;

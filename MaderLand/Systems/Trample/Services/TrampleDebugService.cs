@@ -1,10 +1,6 @@
-﻿using MaderLand.Config.Utils;
-using MaderLand.Systems.Trample.Data;
+﻿using MaderLand.Systems.Trample.Data;
 using MaderLand.Systems.Trample.Gui;
 using MaderLand.Systems.Trample.Network;
-using System;
-using System.Collections.Generic;
-using System.Text;
 using Vintagestory.API.Client;
 using Vintagestory.API.Server;
 

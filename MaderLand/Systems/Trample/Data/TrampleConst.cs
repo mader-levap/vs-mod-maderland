@@ -1,4 +1,4 @@
-﻿using MaderLand.Config.Trample;
+﻿using MaderLand.Systems.Trample.Config;
 using System.Collections.Generic;
 
 namespace MaderLand.Systems.Trample.Data;
@@ -49,11 +49,15 @@ public static class TrampleConst
         new() { EntityCode = "game:sheep-*-adult-*", Power = 1, FallMul = 2 },
         new() { EntityCode = "game:deer-*-adult-*", Power = 1, FallMul = 2 },
         new() { EntityCode = "game:goat-*-adult-*", Power = 1, FallMul = 2 },
+        new() { EntityCode = "game:gazelle-*-adult-*", Power = 1, FallMul = 2 },
 
         // large animals
         new() { EntityCode = "game:bear-*-adult-*", Power = 3, FallMul = 2 },
 
         // rust world denizens
+        new() { EntityCode = "game:drifter-*", Power = 1, FallMul = 2 },
+        new() { EntityCode = "game:bowtorn-*", Power = 1, FallMul = 2 },
+        new() { EntityCode = "game:shiver-*", Power = 1, FallMul = 2 },
     ];
 
     /// <summary>

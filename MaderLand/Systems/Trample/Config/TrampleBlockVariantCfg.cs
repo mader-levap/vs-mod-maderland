@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace MaderLand.Config.Trample;
+namespace MaderLand.Systems.Trample.Config;
 
 /// <summary>
 /// Describes single block variant affected by trampling.

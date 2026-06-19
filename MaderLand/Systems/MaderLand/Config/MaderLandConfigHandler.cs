@@ -1,7 +1,7 @@
-﻿using MaderLand.Config.Utils;
+﻿using MaderLand.Common.Config;
 using Vintagestory.API.Common;
 
-namespace MaderLand.Config.MaderLand;
+namespace MaderLand.Systems.MaderLand.Config;
 
 /// <summary>
 /// Handles the main MaderLand config file.

@@ -1,4 +1,4 @@
-﻿using MaderLand.Config.Utils;
+﻿using MaderLand.Common.Config;
 using MaderLand.Systems.Trample.Services;
 using Vintagestory.API.Common;
 using Vintagestory.API.MathTools;

@@ -1,6 +1,6 @@
 ﻿using Vintagestory.API.Common;
 
-namespace MaderLand.Systems.Manager;
+namespace MaderLand.Common.Manager;
 
 /// <summary>
 /// Specifies a contract for classes that can initialize features.

@@ -1,4 +1,4 @@
-using MaderLand.Config.Utils;
+using MaderLand.Common.Config;
 using MaderLand.Systems.Trample.Data;
 using MaderLand.Systems.Trample.Gui;
 using MaderLand.Systems.Trample.Network;

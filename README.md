@@ -5,6 +5,8 @@ A Vintage Story personal mod that adds various features and tweaks to base game 
 ## Features
 
 - **Trample** — Blocks change over time when walked on, creating natural paths and trails.
+  - Fully configurable.
+  - Any entity can potentially trample, not just Seraphs.
 
 ## Other changes
 

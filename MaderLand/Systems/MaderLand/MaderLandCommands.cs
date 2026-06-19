@@ -1,12 +1,13 @@
-﻿using Vintagestory.API.Common;
+﻿using MaderLand.Systems.Trample.Commands;
+using Vintagestory.API.Common;
 using Vintagestory.API.Server;
 
-namespace MaderLand.Commands;
+namespace MaderLand.Systems.MaderLand;
 
 /// <summary>
 /// Handles 'maderland' command.
 /// </summary>
-public static class MaderLandCommand
+public static class MaderLandCommands
 {
     /// <summary>
     /// Registers the /ml command. All commands have form of /ml [feature] [action] [all other parameters, optional]

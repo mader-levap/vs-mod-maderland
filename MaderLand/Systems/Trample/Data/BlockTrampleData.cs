@@ -1,4 +1,4 @@
-﻿using MaderLand.Config.Trample;
+﻿using MaderLand.Systems.Trample.Config;
 using ProtoBuf;
 
 namespace MaderLand.Systems.Trample.Data;

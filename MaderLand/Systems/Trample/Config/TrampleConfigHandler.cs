@@ -1,8 +1,8 @@
-﻿using MaderLand.Config.Utils;
+﻿using MaderLand.Common.Config;
 using MaderLand.Systems.Trample.Data;
 using Vintagestory.API.Common;
 
-namespace MaderLand.Config.Trample;
+namespace MaderLand.Systems.Trample.Config;
 
 /// <summary>
 /// Handles the Trample config file.
@@ -18,7 +18,7 @@ public class TrampleConfigHandler
     {
         TrampleCfg trampleCfg = ModConfigHandler.Load(api, ConfigPath, TrampleConst.DefaultTrampleCfg);
 
-        string message = $"[Trample] Loaded config. Passable: Blocks={trampleCfg.Passable.Blocks.Count}, BlockVariants={trampleCfg.Passable.BlockVariants.Count}. Impassable: Blocks={trampleCfg.Impassable.Blocks.Count}, BlockVariants={trampleCfg.Impassable.BlockVariants.Count}.";
+        string message = $"[Trample] Loaded config. Trampleable entities: {trampleCfg.Entities.Count}. Passable: Blocks={trampleCfg.Passable.Blocks.Count}, BlockVariants={trampleCfg.Passable.BlockVariants.Count}. Impassable: Blocks={trampleCfg.Impassable.Blocks.Count}, BlockVariants={trampleCfg.Impassable.BlockVariants.Count}.";
         api.Logger.Notification(message);
         return trampleCfg;
     }

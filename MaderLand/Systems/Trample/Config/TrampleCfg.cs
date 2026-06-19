@@ -1,7 +1,7 @@
 ﻿using MaderLand.Systems.Trample;
 using System.Collections.Generic;
 
-namespace MaderLand.Config.Trample;
+namespace MaderLand.Systems.Trample.Config;
 
 /// <summary>
 /// Defines shape of config file maderland/trample.json.

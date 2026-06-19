@@ -27,17 +27,37 @@ Use these resources if you are not sure about particulars of API.
 
 ## Project Structure
 
+### Main project
+
 ```
 MaderLand/
-├─ Commands/                    # Contains command /ml (short for maderland) and its subcommands for every feature.
-├─ Config/                      # Utilities and config definitions for every feature.
-├─ Systems/                     # ModSystems for every feature.
-├─ Utils/                       # Common utility classes.
-├─ MaderLandModSystem.cs        # Main ModSystem entry point.
 ├─ assets/
-│   └─ maderland/               # JSON assets, lang files.
-└─ modinfo.json
+│   └─ maderland/               # JSON assets, lang files, etc.
+├─ Common/                      # Common classes.
+│   ├─ Config/                  # Classes to handle configuration.
+│   └─ Manager/                 # Feature manager.
+├─ Systems/                     # Contains all features.
+├─ Utils/                       # Utility classes.
+├─ MaderLandModSystem.cs        # Main ModSystem entry point.
+└─ modinfo.json                 # Basic definition of Vintage Story mod.
 ```
+
+### Feature folders
+Every feature is present as separate folder in `Systems` folder. In turn, feature folder can contain subfolders described below:
+```
+FeatureName/
+├─ Behaviors/                   # Behaviors.
+├─ Blocks/                      # Blocks.
+├─ Commands/                    # Console commands for this feature.
+├─ Config/                      # Configuration data structure and handler.
+├─ Data/                        # Other data structures, constants etc.
+├─ Gui/                         # GUI-related classes.
+├─ Network/                     # Network packets.
+├─ Services/                    # Main codebase for feature. Usually has at least FeatureMain.cs class.
+└─ FeatureSystem.cs             # ModSystem entry point for this feature.
+```
+
+Note some folders can be missing if not needed by feature.
 
 ## Conventions
 - Namespace root: `MaderLand`
@@ -56,7 +76,7 @@ MaderLand/
 - `ConfigService` class contains all configurations and handle them.
 - Game-wise, configuration exists in `%AppData%/VintagestoryData/ModConfig/maderland` directory.
 - Mod has main config file `maderland.json`.
-- Every feature has its own json file. One config class per feature.
+- Every feature has its own json file. `Config/` subfolder contains data about it.
 
 ## Do Not
 

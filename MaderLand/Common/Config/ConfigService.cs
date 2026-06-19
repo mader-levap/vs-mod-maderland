@@ -1,8 +1,8 @@
-﻿using MaderLand.Config.MaderLand;
-using MaderLand.Config.Trample;
+﻿using MaderLand.Systems.MaderLand.Config;
+using MaderLand.Systems.Trample.Config;
 using Vintagestory.API.Common;
 
-namespace MaderLand.Config.Utils;
+namespace MaderLand.Common.Config;
 
 /// <summary>
 /// Manages configuration. This is also where you access configuration.

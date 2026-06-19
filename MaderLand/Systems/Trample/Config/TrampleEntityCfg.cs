@@ -1,4 +1,4 @@
-﻿namespace MaderLand.Config.Trample;
+﻿namespace MaderLand.Systems.Trample.Config;
 
 /// <summary>
 /// Contains data about entity that can trample.

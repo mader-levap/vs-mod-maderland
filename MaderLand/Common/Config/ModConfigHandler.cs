@@ -1,7 +1,7 @@
 ﻿using System;
 using Vintagestory.API.Common;
 
-namespace MaderLand.Config.Utils;
+namespace MaderLand.Common.Config;
 
 /// <summary>
 /// Generic helper for loading and saving mod config files.

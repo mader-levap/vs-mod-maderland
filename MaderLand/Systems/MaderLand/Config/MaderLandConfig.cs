@@ -1,4 +1,4 @@
-﻿namespace MaderLand.Config.MaderLand;
+﻿namespace MaderLand.Systems.MaderLand.Config;
 
 /// <summary>
 /// General config for entire MaderLand mod.

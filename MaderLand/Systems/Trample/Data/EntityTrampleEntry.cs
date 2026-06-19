@@ -1,4 +1,4 @@
-﻿using MaderLand.Config.Trample;
+﻿using MaderLand.Systems.Trample.Config;
 using System;
 using System.Collections.Generic;
 using System.Text;

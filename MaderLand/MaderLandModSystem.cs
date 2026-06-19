@@ -1,6 +1,6 @@
-﻿using MaderLand.Commands;
-using MaderLand.Config.Utils;
-using MaderLand.Systems.Manager;
+﻿using MaderLand.Common.Config;
+using MaderLand.Common.Manager;
+using MaderLand.Systems.MaderLand;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
 using Vintagestory.API.Server;
@@ -30,7 +30,7 @@ public class MaderLandModSystem : ModSystem
     /// <param name="api">Core server API.</param>
     public override void StartServerSide(ICoreServerAPI api)
     {
-        MaderLandCommand.Register(api);
+        MaderLandCommands.Register(api);
     }
 
     /// <summary>
