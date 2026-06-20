@@ -2,6 +2,7 @@
 using MaderLand.Systems.Trample.Config;
 using MaderLand.Systems.Trample.Data;
 using MaderLand.Utils;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using Vintagestory.API.Common;
 using Vintagestory.API.Common.Entities;
@@ -20,9 +21,9 @@ public class TrampleMain
     readonly TrampleService trampleService;
 
     /// <summary>
-    /// List of trampleable entities.
+    /// List of trampleable entities. Adding and removing entities is called via events separately.
     /// </summary>
-    private readonly Dictionary<long, EntityTrampleEntry> entityEntries = [];
+    private readonly ConcurrentDictionary<long, EntityTrampleEntry> entityEntries = [];
 
     public TrampleMain(ICoreServerAPI api)
     {
@@ -45,11 +46,7 @@ public class TrampleMain
         if (trampleEntityCfg == null) return; // Will not add this entity - it does not appear in configuration.
 
         EntityTrampleEntry newEntry = Create(entity, trampleEntityCfg);
-
-        //string message = $"[Trample] TrampleMain.Add(). Added entity '{newEntry.Name}'.";
-        //sapi.Logger.Notification(message); // DEBUG
-
-        entityEntries.Add(entity.EntityId, newEntry);
+        entityEntries.TryAdd(entity.EntityId, newEntry);
     }
 
     /// <summary>
@@ -100,15 +97,7 @@ public class TrampleMain
     /// <param name="entity">Entity to remove.</param>
     public void Remove(Entity entity)
     {
-        entityEntries.Remove(entity.EntityId);
-        /*string? name = entityEntries.TryGetValue(entity.EntityId, out var e) ? e.Name : null;
-        // Find entry with this entity and remove it.
-        bool result = entityEntries.Remove(entity.EntityId);
-        if (result)
-        {
-            string message = $"[Trample] TrampleMain.Remove(). Removed entity '{name}'.";
-            sapi.Logger.Notification(message); // DEBUG
-        }*/
+        entityEntries.TryRemove(entity.EntityId, out _);
     }
 
     // ////////////////////////////////////////////////////////////////////////
@@ -117,7 +106,7 @@ public class TrampleMain
     /// Process entity movement and perform trampling logic if they walked onto a new block.
     /// </summary>
     /// <param name="dt">Delta time.</param>
-    public void ProcessTramplingEntities(float dt)
+    public void ProcessTramplingEntities(float _)
     {
         // Only run detection if the trample feature is active or allowed in the configuration
         if (sapi == null || !ConfigService.TrampleConfig.Active || !ConfigService.TrampleConfig.Allow) return;
@@ -137,6 +126,10 @@ public class TrampleMain
     {
         if (!CanUseEntity(entry.Entity)) return;
 
+        HandleFall(entry);
+
+        if (!entry.Entity.OnGround) return; // Any trampling happens only when we touch ground.
+
         BlockPos currentPos = entry.Entity.Pos.AsBlockPos;
         if (entry.LastPos == null)
         {
@@ -150,21 +143,55 @@ public class TrampleMain
     }
 
     /// <summary>
-    /// Check if we can use entity for trample logic.
-    /// We only want to detect players in survival mode who are on the ground.
+    /// Check if we can use entity for trample logic. If player, allow only players in survival mode.
     /// </summary>
     /// <param name="entity">The entity to check.</param>
     /// <returns>True if the entity can trample blocks.</returns>
     private static bool CanUseEntity(Entity entity)
     {
-        if (!entity.OnGround) return false;
-
         IServerPlayer? player = EntityUtils.ResolvePlayer(entity);
         if (player == null) return true; // Not a player, skip rest of checks.
 
         if (player.ConnectionState != EnumClientState.Playing) return false;
         if (player.WorldData.CurrentGameMode != EnumGameMode.Survival) return false;
-
         return true;
+    }
+
+    //
+
+    /// <summary>
+    /// Handle falling.
+    /// </summary>
+    /// <param name="entry">Entry to handle.</param>
+    private static void HandleFall(EntityTrampleEntry entry)
+    {
+        double DiffY = 0;
+        if (entry.LastOnGround && !entry.Entity.OnGround) entry.FallStartY = entry.Entity.Pos.Y; // started falling
+        if (!entry.LastOnGround && entry.Entity.OnGround) DiffY = entry.FallStartY - entry.Entity.Pos.Y; // stopped falling
+        entry.LastOnGround = entry.Entity.OnGround;
+        entry.ImpactStrength = CalcImpactStrength(DiffY);
+    }
+
+    /// <summary>
+    /// Calculate impact strength, taking in account fall configuration.
+    /// </summary>
+    /// <param name="FallY">Difference between Y position where entity start falling and stop falling.</param>
+    /// <returns>Impact strength.</returns>
+    private static float CalcImpactStrength(double FallY)
+    {
+        if (FallY <= 0) return 0; // That was not a fall.
+
+        TrampleFallCfg FallCfg = ConfigService.TrampleConfig.Fall;
+        double EffectiveFallY = FallY;
+
+        // Enforce cap height.
+        double CapHeight = FallCfg.CapHeight;
+        if (CapHeight > 0 && EffectiveFallY > CapHeight) EffectiveFallY = CapHeight;
+
+        // Enforce minimum height.
+        EffectiveFallY -= FallCfg.MinimumHeight;
+
+        if (EffectiveFallY <= 0) return 0;
+        return (float)(EffectiveFallY * FallCfg.Mul);
     }
 }

@@ -25,11 +25,12 @@ public class BlockSoilTrampleable : BlockSoil
         AllTrampleData allTrampleData = TrampleUtils.GetTrampleData(api, pos);
         if (allTrampleData.blockData != null)
         {
-            TrampleUtils.DeltaTrampleData(api, allTrampleData.blockData, pos);
+            float OldDur = allTrampleData.blockData.Durability;
+            TrampleUtils.DeltaTrampleData(api, allTrampleData.blockData);
 
             if (allTrampleData.blockData.Durability >= allTrampleData.blockData.MaxDurability)
             {   // Block fully recovered from trampling, remove trample data.
-                TrampleUtils.RemoveTrampleData(api, allTrampleData, pos);
+                TrampleUtils.RemoveTrampleData(allTrampleData, pos);
             } else return; // Do not allow grass to grow if the soil is trampled.
         }
 

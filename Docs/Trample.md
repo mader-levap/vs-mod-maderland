@@ -19,10 +19,16 @@ Blocks can regenerate and recover, allowing them to act normally, like growing g
 Format of config file `maderland/trample.json`:
 
 - `Active`: Can turn on/off Trample feature.
+- `Allow`: Can trample?
+- `Debug`: Is in debug mode?
+- `Fall`: Fall config. Note that trample power due to fall is in addition to normal trample power.
+  - `CapHeight`: If larger than zero, fall height will be capped to this value.
+  - `MinimumHeight`: Fall height smaller than this will be ignored. Effective fall height will be subtracted.
+  - `Mul`: Basic multiplier of trampling power. Do not forget that entities also have their own individual `FallMul`.
 - `Entities`: List of entities that can trample blocks. Each entry contains these fields:
-  - `EntityCode`: Code of entity. You can use wildcards.
-  - `Power`: How powerful is walking onto block.
-  - `FallMul`: Multiplier for additional trampling power generated due to fall. Set 0 if you do not want any additional power.
+  - `EntityCode`: Code of entity. You can use wildcards. Remember to put more specific code first, for example `game:deer-elk-adult-*` before `game:deer-*-adult-*`.
+  - `Power`: Trampling power for just walking onto trampleable block.
+  - `FallMul`: Multiplier for additional trampling power generated due to fall. Set to zero to disable that.
 - `Passable`: two lists of passable blocks, like `game:tallgrass-medium-*`.
 - `Impassable`: two lists of impassable blocks, like `game:soil-*-normal`.
 

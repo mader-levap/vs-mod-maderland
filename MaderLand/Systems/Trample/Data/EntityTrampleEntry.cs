@@ -1,7 +1,4 @@
 ﻿using MaderLand.Systems.Trample.Config;
-using System;
-using System.Collections.Generic;
-using System.Text;
 using Vintagestory.API.Common.Entities;
 using Vintagestory.API.MathTools;
 
@@ -18,14 +15,30 @@ public class EntityTrampleEntry
     public Entity Entity { get; }
 
     /// <summary>
-    /// Name of entity. For players it will be player name, otherwise EntityId.
+    /// Name of entity. For players it will be player name, otherwise general name of entity.
     /// </summary>
     public string Name { get; }
 
     /// <summary>
-    /// Last position of entity.
+    /// Last block position of entity.
     /// </summary>
     public BlockPos LastPos { get; set; } = null!;
+
+    /// <summary>
+    /// Last state of OnGround.
+    /// </summary>
+    public bool LastOnGround { get; set; } = true;
+
+    /// <summary>
+    /// Y where fall started.
+    /// </summary>
+    public double FallStartY { get; set; } = 0d;
+
+    /// <summary>
+    /// Strength of impact. Base for calculating bonus trampling power.
+    /// </summary>
+    public float ImpactStrength { get; set; } = 0f;
+
 
     /// <summary>
     /// Trample configuration entry for this entity.
@@ -36,6 +49,7 @@ public class EntityTrampleEntry
     /// Constructor.
     /// </summary>
     /// <param name="Entity">Entity.</param>
+    /// <param name="Name">Name of entity. Shown in debug.</param>
     /// <param name="TrampleEntityCfg">Trample configuration entry for this entity.</param>
     public EntityTrampleEntry(Entity Entity, string Name, TrampleEntityCfg TrampleEntityCfg)
     {

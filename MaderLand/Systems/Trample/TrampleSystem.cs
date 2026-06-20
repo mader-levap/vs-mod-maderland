@@ -2,9 +2,7 @@ using MaderLand.Common.Config;
 using MaderLand.Systems.Trample.Data;
 using MaderLand.Systems.Trample.Gui;
 using MaderLand.Systems.Trample.Network;
-using MaderLand.Systems.Trample.Render;
 using MaderLand.Systems.Trample.Services;
-using MaderLand.Utils;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
 using Vintagestory.API.Common.Entities;
@@ -67,25 +65,16 @@ public class TrampleSystem : ModSystem
 
     private void OnEntitySpawn(Entity entity)
     {
-        string message = $"[Trample] OnEntitySpawn called. Entity Id='{entity.EntityId}', Name='{entity.GetName()}', Code='{entity.Code}'.";
-        sapi.Logger.Notification(message); // DEBUG
-
         trampleMain.Add(entity);
     }
 
     private void OnEntityLoaded(Entity entity)
     {
-        string message = $"[Trample] OnEntityLoaded called. Entity: '{entity.EntityId}', Name='{entity.GetName()}', Code='{entity.Code}.";
-        sapi.Logger.Notification(message); // DEBUG
-
         trampleMain.Add(entity);
     }
 
     private void OnEntityDespawn(Entity entity, EntityDespawnData reasonData)
     {
-        string message = $"[Trample] OnEntityDespawn called. Entity: '{entity.EntityId}', Name='{entity.GetName()}', Code='{entity.Code}. Reason: '{reasonData.Reason}', DamageSourceForDeath: '{reasonData.DamageSourceForDeath}'";
-        sapi.Logger.Notification(message); // DEBUG
-
         trampleMain.Remove(entity);
     }
 

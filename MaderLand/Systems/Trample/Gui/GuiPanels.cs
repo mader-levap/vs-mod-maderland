@@ -18,7 +18,7 @@ public class GuiPanels
     /// <param name="api">Core client API.</param>
     /// <returns>Initialized debug panel.</returns>
     public static GuiDebugPanel GetDebug(ICoreClientAPI api) {
-        if (Debug == null) Debug = new GuiDebugPanel(api);
+        Debug ??= new GuiDebugPanel(api);
         return Debug;
     }
 }

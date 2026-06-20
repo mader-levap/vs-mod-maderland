@@ -20,8 +20,9 @@ public class GuiDebugPanel : GuiDialog
     {
         ElementBounds dialogBounds = ElementStdBounds.AutosizedMainDialog.WithAlignment(EnumDialogArea.LeftMiddle);
 
-        ElementBounds posBounds = ElementBounds.Fixed(0, 25, 300, 20);
-        ElementBounds durBounds = posBounds.BelowCopy(0, 0);
+        ElementBounds posBounds = ElementBounds.Fixed(0, 25, 400, 20);
+        ElementBounds blockNameBounds = posBounds.BelowCopy(0, 0);
+        ElementBounds durBounds = blockNameBounds.BelowCopy(0, 0);
         ElementBounds maxDurBounds = durBounds.BelowCopy(0, 0);
         ElementBounds regenBounds = maxDurBounds.BelowCopy(0, 0);
         ElementBounds updatedAtBounds = regenBounds.BelowCopy(0, 0);
@@ -35,6 +36,7 @@ public class GuiDebugPanel : GuiDialog
             .AddDialogTitleBar("Trample Debug", OnTitleBarCloseClicked)
             .BeginChildElements(bgBounds)
               .AddDynamicText("Position: -", CairoFont.WhiteSmallText(), posBounds, "position")
+              .AddDynamicText("Block: -", CairoFont.WhiteSmallText(), blockNameBounds, "blockName")
               .AddDynamicText("Durability: -", CairoFont.WhiteSmallText(), durBounds, "durability")
               .AddDynamicText("MaxDurability: -", CairoFont.WhiteSmallText(), maxDurBounds, "maxDurability")
               .AddDynamicText("Regen: -", CairoFont.WhiteSmallText(), regenBounds, "regen")
@@ -53,6 +55,7 @@ public class GuiDebugPanel : GuiDialog
     public void UpdateGui(TrampleDataResp packet)
     {
         string positionVal = packet.Pos != null ? packet.Pos.ToString() : "-";
+        string blockNameVal = packet.Pos != null ? capi.World.BlockAccessor.GetBlock(packet.Pos).Code : "-";
         string durabilityVal = "-";
         string maxDurabilityVal = "-";
         string regenVal = "-";
@@ -66,6 +69,7 @@ public class GuiDebugPanel : GuiDialog
         }
 
         SingleComposer.GetDynamicText("position").SetNewTextAsync("Position: " + positionVal, true);
+        SingleComposer.GetDynamicText("blockName").SetNewTextAsync("Block: " + blockNameVal, true);
         SingleComposer.GetDynamicText("durability").SetNewTextAsync("Durability: " + durabilityVal, true);
         SingleComposer.GetDynamicText("maxDurability").SetNewTextAsync("MaxDurability: " + maxDurabilityVal, true);
         SingleComposer.GetDynamicText("regen").SetNewTextAsync("Regen: " + regenVal, true);

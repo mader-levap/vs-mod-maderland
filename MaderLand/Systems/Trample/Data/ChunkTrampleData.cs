@@ -11,5 +11,5 @@ public class ChunkTrampleData
 {
     // Maps a local block index in the chunk (0 to 32767) to instance of BlockTrampleData.
     [ProtoMember(1)]
-    public Dictionary<int, BlockTrampleData> Blocks { get; set; } = new();
+    public Dictionary<int, BlockTrampleData> Blocks { get; set; } = [];
 }

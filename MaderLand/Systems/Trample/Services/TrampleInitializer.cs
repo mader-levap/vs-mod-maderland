@@ -86,8 +86,5 @@ public class TrampleInitializer : IInitializer
             return;
         }
         block.BlockBehaviors = block.BlockBehaviors.Append(new TrampleBehavior(api, block));
-
-        //string message = $"[Trample] Added trample behavior to '{blockCode}'.";
-        //api.Logger.Notification(message); // DEBUG
     }
 }

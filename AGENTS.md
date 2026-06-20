@@ -1,6 +1,6 @@
 # AGENTS.md — MaderLand Mod by Mader Levap
 
-AI agent context file for the MaderLand Vintage Story mod project.
+AI agent context file for the Vintage Story mod project called MaderLand.
 
 ## Project Overview
 
@@ -23,7 +23,9 @@ GitHub: https://github.com/mader-levap/vs-mod-maderland
 You can check API for mods:
 - API docs: https://apidocs.vintagestory.at/
 - Source code: https://github.com/anegostudios/vsapi
-Use these resources if you are not sure about particulars of API.
+Use these websites if you are not sure about particulars of API.
+
+Also, feel free to search internet for tutorials, other VS mods and similar resources if needed.
 
 ## Project Structure
 

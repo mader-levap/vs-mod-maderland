@@ -33,10 +33,10 @@ public class TrampleUtils
 
         // If there is already trample data for this block, we will ignore it.
         int localIndex = MapUtil.Index3d(pos.X & 31, pos.Y & 31, pos.Z & 31, 32, 32);
-        if (!chunkTrampleData.Blocks.TryGetValue(localIndex, out BlockTrampleData? blockTrampleData))
+        if (!chunkTrampleData.Blocks.ContainsKey(localIndex))
         {
             // No existing trample data for this block, create new one and write to chunk data.
-            blockTrampleData = CreateBlockTrampleData(api, trampleBlockCfg);
+            BlockTrampleData blockTrampleData = CreateBlockTrampleData(api, trampleBlockCfg);
             chunkTrampleData.Blocks[localIndex] = blockTrampleData;
             SaveChunkTrampleData(chunk, chunkTrampleData);
         }
@@ -92,9 +92,11 @@ public class TrampleUtils
     /// <returns>All trample data. Note some of these can be null.</returns>
     private static AllTrampleData ResolveMostData(ICoreServerAPI api, BlockPos pos, bool create)
     {
-        AllTrampleData allTrampleData = new();
+        AllTrampleData allTrampleData = new()
+        {
+            chunk = api.WorldManager.GetChunk(pos)
+        };
 
-        allTrampleData.chunk = api.WorldManager.GetChunk(pos);
         if (allTrampleData.chunk == null) return allTrampleData; // No chunk found for this position, nothing to get.
 
         ChunkTrampleData? chunkData = LoadChunkTrampleData(allTrampleData.chunk, create);
@@ -109,31 +111,17 @@ public class TrampleUtils
     /// </summary>
     /// <param name="api">Core server API.</param>
     /// <param name="blockTrampleData">Updated trample data for given block.</param>
-    public static void DeltaTrampleData(ICoreServerAPI api, BlockTrampleData blockTrampleData, BlockPos pos)
+    public static void DeltaTrampleData(ICoreServerAPI api, BlockTrampleData blockTrampleData)
     {
         double CurrTime = api.World.Calendar.TotalDays;
         double PassedTime = CurrTime - blockTrampleData.UpdatedAt;
         if (PassedTime == 0) return; // No time passed, do not regenerate anything yet.
 
-        Block block = api.World.BlockAccessor.GetBlock(pos);
-        string message = $"[Trample] DeltaTrampleData(). Block: pos='{pos}', code='{block.Code}'. CurrTime={CurrTime}, PassedTime={PassedTime}.\r\n  blockTrampleData: Durability={blockTrampleData.Durability}, MaxDurability={blockTrampleData.MaxDurability}, Regen={blockTrampleData.Regen}, UpdatedAt={blockTrampleData.UpdatedAt}.";
-        api.Logger.Notification(message); // DEBUG
-
         blockTrampleData.UpdatedAt = CurrTime;
         float DurRegen = blockTrampleData.MaxDurability * (float)PassedTime / blockTrampleData.Regen;
         blockTrampleData.Durability += DurRegen;
 
-        if (blockTrampleData.Durability >= blockTrampleData.MaxDurability)
-        {
-            string message1 = $"[Trample] DeltaTrampleData(). FULLY regenerated! DurRegen={DurRegen}, new blockTrampleData.Durability={blockTrampleData.Durability}.";
-            api.Logger.Notification(message1); // DEBUG
-            blockTrampleData.Durability = blockTrampleData.MaxDurability;
-        }
-        else
-        {
-            string message2 = $"[Trample] DeltaTrampleData(). Partially regenerated! DurRegen={DurRegen}, new blockTrampleData.Durability={blockTrampleData.Durability}.";
-            api.Logger.Notification(message2); // DEBUG
-        }
+        if (blockTrampleData.Durability >= blockTrampleData.MaxDurability) blockTrampleData.Durability = blockTrampleData.MaxDurability;
     }
 
     //
@@ -158,10 +146,10 @@ public class TrampleUtils
     public static void RemoveTrampleData(ICoreServerAPI api, BlockPos pos)
     {
         IServerChunk chunk = api.WorldManager.GetChunk(pos);
-        if (chunk == null) return; // No chunk found for this position, nothing to cleanup.
+        if (chunk == null) return; // No chunk found for this position, nothing to remove.
 
         ChunkTrampleData? chunkTrampleData = LoadChunkTrampleData(chunk, false);
-        if (chunkTrampleData == null) return; // No trample data for this chunk, nothing to cleanup.
+        if (chunkTrampleData == null) return; // No trample data for this chunk, nothing to remove.
 
         int localIndex = MapUtil.Index3d(pos.X & 31, pos.Y & 31, pos.Z & 31, 32, 32);
         if (chunkTrampleData.Blocks.Remove(localIndex)) SaveChunkTrampleData(chunk, chunkTrampleData);
@@ -170,9 +158,8 @@ public class TrampleUtils
     /// <summary>
     /// Removes trample data for a specific block position. Verson for when you already loaded all relevant data via GetTrampleData() or ResolveTrampleData().
     /// </summary>
-    /// <param name="api">Core server API.</param>
     /// <param name="allTrampleData">All trample data.</param>
-    public static void RemoveTrampleData(ICoreServerAPI api, AllTrampleData allTrampleData, BlockPos pos)
+    public static void RemoveTrampleData(AllTrampleData allTrampleData, BlockPos pos)
     {
         if (allTrampleData.chunk == null || allTrampleData.chunkData == null) return; // No trample data, nothing to remove.
 
@@ -231,9 +218,6 @@ public class TrampleUtils
                 api.Logger.Error($"[Trample] Failed to resolve wildcard block code for currBlockCode='{currBlockCode}' with FromBlockCode='{variant.FromBlockCode}' and ToBlockCode='{variant.ToBlockCode}'. Make sure the wildcard is used correctly in config.");
                 return null;
             }
-
-            //string message = $"[Trample] Found match for wildcard FromBlockCode '{variant.FromBlockCode}' and wildcard ToBlockCode '{variant.ToBlockCode}' against '{currBlockCode}'. Calculated full ToBlockCode: '{resolvedTo}'.";
-            //api.Logger.Notification(message); // DEBUG
 
             return new TrampleBlockVariantCfg
             {

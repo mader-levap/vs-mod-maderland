@@ -1,5 +1,4 @@
-﻿using MaderLand.Common.Config;
-using MaderLand.Systems.Trample.Config;
+﻿using MaderLand.Systems.Trample.Config;
 using MaderLand.Systems.Trample.Data;
 using Vintagestory.API.Common;
 using Vintagestory.API.MathTools;
@@ -22,13 +21,10 @@ public class TrampleService(ICoreServerAPI sapi)
         BlockPos posUnder = entry.LastPos.DownCopy();
         Block blockUnder = sapi.World.BlockAccessor.GetBlock(posUnder);
 
-        string message = $"[Trample] Entity '{entry.Name}' walked to new block: {blockEntity.Code} at {entry.LastPos}. Block under: {blockUnder.Code}.";
-        sapi.Logger.Notification(message); // DEBUG
-
         // We can trample grass and similar stuff that can be walked through by players.
-        bool result = TryTrampleBlock(blockEntity, entry.LastPos, true);
+        bool result = TryTrampleBlock(entry, blockEntity, entry.LastPos, true);
         // If result is ok (like grass fully trampled), try to trample block under player.
-        if (result) TryTrampleBlock(blockUnder, posUnder, false);
+        if (result) TryTrampleBlock(entry, blockUnder, posUnder, false);
     }
 
     /// <summary>
@@ -39,7 +35,7 @@ public class TrampleService(ICoreServerAPI sapi)
     /// <param name="pos">Position of block.</param>
     /// <param name="passable">Is block passable?</param>
     /// <returns>True if we can check block underneath next. Matters only for passable blocks.</returns>
-    private bool TryTrampleBlock(Block block, BlockPos pos, bool passable)
+    private bool TryTrampleBlock(EntityTrampleEntry entry, Block block, BlockPos pos, bool passable)
     {
         TrampleBlockCfg? trampleBlockCfg = TrampleUtils.GetTrampleConfig(sapi, block, passable);
         if (trampleBlockCfg == null) return true; // No trample config for this block, skip.
@@ -47,8 +43,8 @@ public class TrampleService(ICoreServerAPI sapi)
         AllTrampleData allTrampleData = TrampleUtils.ResolveBlockTrampleData(sapi, trampleBlockCfg, pos);
         if (!allTrampleData.IsValid()) return true;
 
-        TrampleUtils.DeltaTrampleData(sapi, allTrampleData.blockData, pos);
-        Block? replacementBlock = TrampleBlock(trampleBlockCfg, allTrampleData.blockData, block, pos);
+        TrampleUtils.DeltaTrampleData(sapi, allTrampleData.blockData);
+        Block? replacementBlock = TrampleBlock(entry, trampleBlockCfg, allTrampleData.blockData, block, pos);
 
         if (replacementBlock != null) RefreshTrampleData(allTrampleData, replacementBlock, pos, passable);
 
@@ -66,12 +62,9 @@ public class TrampleService(ICoreServerAPI sapi)
     /// <param name="block">Block data.</param>
     /// <param name="pos">Position of block.</param>
     /// <returns>Replacement block or null if block was not replaced.</returns>
-    private Block? TrampleBlock(TrampleBlockCfg trampleBlockCfg, BlockTrampleData blockTrampleData, Block block, BlockPos pos)
+    private Block? TrampleBlock(EntityTrampleEntry entry, TrampleBlockCfg trampleBlockCfg, BlockTrampleData blockTrampleData, Block block, BlockPos pos)
     {
-        float tramplePower = ResolveTramplePower();
-
-        string message = $"[Trample] Block '{block.Code}' at {pos} will be trampled. Durability: {blockTrampleData.Durability}. Power: {tramplePower}.";
-        sapi.Logger.Notification(message); // DEBUG
+        float tramplePower = ResolveTramplePower(entry);
 
         // Trample this block.
         blockTrampleData.Durability -= tramplePower; // Most important line in whole feature, this is where the block actually gets trampled.
@@ -88,9 +81,6 @@ public class TrampleService(ICoreServerAPI sapi)
             sapi.World.BlockAccessor.ExchangeBlock(nextBlock.BlockId, pos); // Will NOT trigger TrampleBehavior.OnBlockRemoved().
             sapi.World.BlockAccessor.MarkBlockDirty(pos);
 
-            string message1 = $"[Trample] Block '{block.Code}' at {pos} was fully trampled and replaced with '{nextBlock.Code}'.";
-            sapi.Logger.Notification(message1); // DEBUG
-
             // We will handle updating trample data for this block in RefreshTrampleData() after this function returns.
             return nextBlock;
         }
@@ -103,11 +93,21 @@ public class TrampleService(ICoreServerAPI sapi)
     /// Resolve trample power.
     /// </summary>
     /// <returns>Trample power.</returns>
-    private static float ResolveTramplePower()
+    private float ResolveTramplePower(EntityTrampleEntry entry)
     {
-        TrampleEntityCfg Entity = ConfigService.TrampleConfig.Entities[0];
-        // TODO actually resolve trampling power of given entity, for now just assume everyone is barefoot and has same trample power.
-        return Entity.Power;
+        TrampleEntityCfg Entity = entry.TrampleEntityCfg;
+
+        float BasePower = Entity.Power;
+        float FallPower = entry.ImpactStrength * entry.TrampleEntityCfg.FallMul;
+
+        // TODO in future check if entity has armor and apply additional trampling power due to that
+
+        if (Entity.EntityCode == "game:player")
+        {
+            string message = $"[Trample] Entity '{entry.Name}' trampled. ImpactStrength={entry.ImpactStrength}, FallMul={entry.TrampleEntityCfg.FallMul}. Power: base={BasePower}, fall={FallPower}.";
+            sapi.Logger.Notification(message); // DEBUG
+        }
+        return BasePower + FallPower;
     }
 
     /// <summary>
@@ -125,18 +125,11 @@ public class TrampleService(ICoreServerAPI sapi)
         {   // No trample config for this block, remove trample data completely.
             int localIndex = MapUtil.Index3d(pos.X & 31, pos.Y & 31, pos.Z & 31, 32, 32);
             allTrampleData.chunkData.Blocks.Remove(localIndex);
-
-            string message1 = $"[Trample] Replacement block '{replacementBlock.Code}' cannot be trampled. Removing trample data.";
-            sapi.Logger.Notification(message1); // DEBUG
             return;
         }
 
-        string message = $"[Trample] Replacement block '{replacementBlock.Code}' can be trampled. Resetting trample data.";
-        sapi.Logger.Notification(message); // DEBUG
-
-        // Note we reduce durability of blocks placed due to trampling.
         allTrampleData.blockData.Reset(replacementTrampleBlockCfg, sapi.World.Calendar.TotalDays);
-        allTrampleData.blockData.Durability *= replacementTrampleBlockCfg.DurRatio;
+        allTrampleData.blockData.Durability *= replacementTrampleBlockCfg.DurRatio; // Note we reduce durability of blocks placed due to trampling.
     }
 
     //

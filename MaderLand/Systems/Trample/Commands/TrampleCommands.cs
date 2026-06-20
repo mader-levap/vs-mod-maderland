@@ -22,14 +22,13 @@ public static class TrampleCommands
     /// <param name="parameters">All other parameters.</param>
     public static TextCommandResult Handle(ICoreServerAPI api, IServerPlayer player, string action, string? parameters)
     {
-        switch (action)
+        return action switch
         {
-            case "active": return Active(api, player, parameters);
-            case "allow": return Allow(api, player, parameters);
-            case "debug": return Debug(api, player, parameters);
-            default:
-                return TextCommandResult.Error($"[Trample] Unknown action '{action}' for feature 'trample'!");
-        }
+            "active" => Active(api, player, parameters),
+            "allow" => Allow(api, player, parameters),
+            "debug" => Debug(api, player, parameters),
+            _ => TextCommandResult.Error($"[Trample] Unknown action '{action}' for feature 'trample'!"),
+        };
     }
 
     /// <summary>

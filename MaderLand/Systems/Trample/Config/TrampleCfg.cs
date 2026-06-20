@@ -1,5 +1,4 @@
-﻿using MaderLand.Systems.Trample;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 
 namespace MaderLand.Systems.Trample.Config;
 
@@ -22,6 +21,11 @@ public class TrampleCfg
     /// Is debug mode active?
     /// </summary>
     public bool Debug { get; set; } = false;
+
+    /// <summary>
+    /// Fall configuration.
+    /// </summary>
+    public TrampleFallCfg Fall { get; set; } = new();
 
     /// <summary>
     /// Who can trample and how?

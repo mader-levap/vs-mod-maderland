@@ -16,7 +16,7 @@ public class TrampleEntityCfg
     public float Power { get; set; } = 1;
 
     /// <summary>
-    /// Fall multiplier. If trampling power should not change when entity falls/jumps into ground, set 0. Result is added to base Power.
+    /// Fall multiplier. If no trampling should occur when entity falls/jumps into ground, set 0. Result is added to base Power.
     /// </summary>
     public float FallMul { get; set; } = 1;
 }

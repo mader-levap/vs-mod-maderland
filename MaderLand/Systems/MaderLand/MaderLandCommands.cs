@@ -25,8 +25,7 @@ public static class MaderLandCommands
                       api.ChatCommands.Parsers.OptionalAll("parameters"))
             .HandleWith(args =>
             {
-                IServerPlayer? player = args.Caller.Player as IServerPlayer;
-                if (player == null) return TextCommandResult.Error("[MaderLand] This command can only be used by a player.");
+                if (args.Caller.Player is not IServerPlayer player) return TextCommandResult.Error("[MaderLand] This command can only be used by a player.");
 
                 string feature = (string)args[0];
                 string action = (string)args[1];
