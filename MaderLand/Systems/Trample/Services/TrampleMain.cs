@@ -3,12 +3,10 @@ using MaderLand.Systems.Trample.Config;
 using MaderLand.Systems.Trample.Data;
 using MaderLand.Utils;
 using System.Collections.Concurrent;
-using System.Collections.Generic;
 using Vintagestory.API.Common;
 using Vintagestory.API.Common.Entities;
 using Vintagestory.API.MathTools;
 using Vintagestory.API.Server;
-using Vintagestory.API.Util;
 
 namespace MaderLand.Systems.Trample.Services;
 
@@ -42,36 +40,11 @@ public class TrampleMain
         // If we already have this entity on list, skip.
         if (entityEntries.ContainsKey(entity.EntityId)) return;
 
-        TrampleEntityCfg? trampleEntityCfg = ResolveCfg(entity);
+        TrampleEntityCfg? trampleEntityCfg = TrampleUtils.GetEntityCfg(entity);
         if (trampleEntityCfg == null) return; // Will not add this entity - it does not appear in configuration.
 
         EntityTrampleEntry newEntry = Create(entity, trampleEntityCfg);
         entityEntries.TryAdd(entity.EntityId, newEntry);
-    }
-
-    /// <summary>
-    /// Find out if this entity has configuration entry.
-    /// </summary>
-    /// <param name="entity">Entity.</param>
-    /// <returns>Configuration entry for this entity or null if no configuration exist</returns>
-    private static TrampleEntityCfg? ResolveCfg(Entity entity)
-    {
-        foreach (TrampleEntityCfg entityCfg in ConfigService.TrampleConfig.Entities)
-        {
-            if (Matches(entityCfg, entity)) return entityCfg;
-        }
-        return null;
-    }
-
-    /// <summary>
-    /// Check if config entry matches given entity
-    /// </summary>
-    /// <param name="entityCfg">Trample entity config.</param>
-    /// <param name="entity">Entity to check.</param>
-    /// <returns>True if configuration matches entity, otherwise false.</returns>
-    private static bool Matches(TrampleEntityCfg entityCfg, Entity entity)
-    {
-        return WildcardUtil.Match(entityCfg.EntityCode, entity.Code.ToString());
     }
 
     /// <summary>

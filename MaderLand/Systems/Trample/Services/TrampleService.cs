@@ -1,28 +1,39 @@
 ﻿using MaderLand.Systems.Trample.Config;
 using MaderLand.Systems.Trample.Data;
 using Vintagestory.API.Common;
+using Vintagestory.API.Common.Entities;
 using Vintagestory.API.MathTools;
 using Vintagestory.API.Server;
+using Vintagestory.GameContent;
 
 namespace MaderLand.Systems.Trample.Services;
 
 /// <summary>
 /// Main trample service class. It is executed on server.
 /// </summary>
-public class TrampleService(ICoreServerAPI sapi)
+public class TrampleService
 {
+    readonly ICoreServerAPI sapi;
+    readonly TrampleItem trampleItem;
+
+    public TrampleService(ICoreServerAPI api)
+    {
+        sapi = api;
+        trampleItem = new(sapi);
+    }
+
     /// <summary>
     /// Perform block trampling logic.
     /// </summary>
-    /// <param name="entry">Entry about entity that can trample stuff.</param>
+    /// <param name="entry">Trampleable entity data.</param>
     public void TrampleLogic(EntityTrampleEntry entry)
     {
-        Block blockEntity = sapi.World.BlockAccessor.GetBlock(entry.LastPos);
+        Block block = sapi.World.BlockAccessor.GetBlock(entry.LastPos);
         BlockPos posUnder = entry.LastPos.DownCopy();
         Block blockUnder = sapi.World.BlockAccessor.GetBlock(posUnder);
 
         // We can trample grass and similar stuff that can be walked through by players.
-        bool result = TryTrampleBlock(entry, blockEntity, entry.LastPos, true);
+        bool result = TryTrampleBlock(entry, block, entry.LastPos, true);
         // If result is ok (like grass fully trampled), try to trample block under player.
         if (result) TryTrampleBlock(entry, blockUnder, posUnder, false);
     }
@@ -31,13 +42,14 @@ public class TrampleService(ICoreServerAPI sapi)
     /// Try to trample given block.
     /// Note: returns false when fails to trample something that needs to be trampled. For example, you need to trample grass fully before trampling block under that grass.
     /// </summary>
+    /// <param name="entry">Trampleable entity data.</param>
     /// <param name="block">Block data.</param>
     /// <param name="pos">Position of block.</param>
     /// <param name="passable">Is block passable?</param>
     /// <returns>True if we can check block underneath next. Matters only for passable blocks.</returns>
     private bool TryTrampleBlock(EntityTrampleEntry entry, Block block, BlockPos pos, bool passable)
     {
-        TrampleBlockCfg? trampleBlockCfg = TrampleUtils.GetTrampleConfig(sapi, block, passable);
+        TrampleBlockCfg? trampleBlockCfg = TrampleUtils.GetBlockConfig(sapi, block, passable);
         if (trampleBlockCfg == null) return true; // No trample config for this block, skip.
 
         AllTrampleData allTrampleData = TrampleUtils.ResolveBlockTrampleData(sapi, trampleBlockCfg, pos);
@@ -57,6 +69,7 @@ public class TrampleService(ICoreServerAPI sapi)
     /// <summary>
     /// Actually trample block.
     /// </summary>
+    /// <param name="entry">Trampleable entity data.</param>
     /// <param name="trampleBlockCfg">Trample configuration for this block.</param>
     /// <param name="blockTrampleData">Trample data for given block.</param>
     /// <param name="block">Block data.</param>
@@ -90,27 +103,6 @@ public class TrampleService(ICoreServerAPI sapi)
     }
 
     /// <summary>
-    /// Resolve trample power.
-    /// </summary>
-    /// <returns>Trample power.</returns>
-    private float ResolveTramplePower(EntityTrampleEntry entry)
-    {
-        TrampleEntityCfg Entity = entry.TrampleEntityCfg;
-
-        float BasePower = Entity.Power;
-        float FallPower = entry.ImpactStrength * entry.TrampleEntityCfg.FallMul;
-
-        // TODO in future check if entity has armor and apply additional trampling power due to that
-
-        if (Entity.EntityCode == "game:player")
-        {
-            string message = $"[Trample] Entity '{entry.Name}' trampled. ImpactStrength={entry.ImpactStrength}, FallMul={entry.TrampleEntityCfg.FallMul}. Power: base={BasePower}, fall={FallPower}.";
-            sapi.Logger.Notification(message); // DEBUG
-        }
-        return BasePower + FallPower;
-    }
-
-    /// <summary>
     /// Block was replaced with another block, we need to refresh trample data.
     /// If that new block has no trample config, we will remove trample data for this block completely.
     /// Otherwise, we will reset trample data for this block to match new block's trample config.
@@ -118,9 +110,10 @@ public class TrampleService(ICoreServerAPI sapi)
     /// <param name="allTrampleData">All trample data.</param>
     /// <param name="replacementBlock">Block that replaced previous block.</param>
     /// <param name="pos">Position of block.</param>
+    /// <param name="passable">Is block passable?</param>
     private void RefreshTrampleData(AllTrampleData allTrampleData, Block replacementBlock, BlockPos pos, bool passable)
     {
-        TrampleBlockCfg? replacementTrampleBlockCfg = TrampleUtils.GetTrampleConfig(sapi, replacementBlock, passable);
+        TrampleBlockCfg? replacementTrampleBlockCfg = TrampleUtils.GetBlockConfig(sapi, replacementBlock, passable);
         if (replacementTrampleBlockCfg == null)
         {   // No trample config for this block, remove trample data completely.
             int localIndex = MapUtil.Index3d(pos.X & 31, pos.Y & 31, pos.Z & 31, 32, 32);
@@ -152,5 +145,28 @@ public class TrampleService(ICoreServerAPI sapi)
             sapi.Logger.Error($"[Trample] Failed to get block with code '{toBlockCode}' when trying to trample block '{block.Code}' at {pos}. Make sure the block code in config is correct.");
 
         return nextBlock;
+    }
+
+    //
+
+    /// <summary>
+    /// Resolve trample power.
+    /// </summary>
+    /// <param name="entry">Trampleable entity data.</param>
+    /// <returns>Trample power.</returns>
+    private float ResolveTramplePower(EntityTrampleEntry entry)
+    {
+        TrampleEntityCfg Entity = entry.TrampleEntityCfg;
+
+        float BasePower = Entity.Power;
+        float FallPower = entry.ImpactStrength * entry.TrampleEntityCfg.FallMul;
+        float EquipmentMul = trampleItem.ResolveEquipmentMul(entry);
+
+        //if (Entity.Code == "game:player" || Entity.Code.StartsWith("game:trader"))
+        //{
+            string message = $"[Trample] Entity '{entry.Name}' trampled. ImpactStrength={entry.ImpactStrength}, FallMul={entry.TrampleEntityCfg.FallMul}. Power: base={BasePower}, fall={FallPower}, equip={EquipmentMul}.";
+            sapi.Logger.Notification(message); // DEBUG
+        //}
+        return BasePower * EquipmentMul + FallPower;
     }
 }

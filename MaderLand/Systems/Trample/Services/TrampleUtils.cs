@@ -2,6 +2,7 @@
 using MaderLand.Systems.Trample.Config;
 using MaderLand.Systems.Trample.Data;
 using Vintagestory.API.Common;
+using Vintagestory.API.Common.Entities;
 using Vintagestory.API.MathTools;
 using Vintagestory.API.Server;
 using Vintagestory.API.Util;
@@ -22,7 +23,7 @@ public class TrampleUtils
     /// <param name="passable">Is block passable?</param>
     public static void AddTrampleData(ICoreServerAPI api, Block block, BlockPos pos, bool passable)
     {
-        TrampleBlockCfg? trampleBlockCfg = GetTrampleConfig(api, block, passable);
+        TrampleBlockCfg? trampleBlockCfg = GetBlockConfig(api, block, passable);
         if (trampleBlockCfg == null) return; // No trample config for this block, skip.
 
         IServerChunk chunk = api.WorldManager.GetChunk(pos);
@@ -171,19 +172,51 @@ public class TrampleUtils
     // CONFIG
 
     /// <summary>
+    /// Get trample configuration for given item.
+    /// </summary>
+    /// <param name="item">Item.</param>
+    /// <returns>Configuration entry for given item or null if item is not present in config.</returns>
+    public static TrampleItemCfg? GetItemConfig(CollectibleObject item)
+    {
+        foreach (TrampleItemCfg itemCfg in ConfigService.TrampleConfig.Items)
+        {
+            if (WildcardUtil.Match(itemCfg.Code, item.Code.ToString())) return itemCfg;
+        }
+        return null;
+    }
+
+    //
+
+    /// <summary>
+    /// Get trample configuration for given entity.
+    /// </summary>
+    /// <param name="entity">Entity.</param>
+    /// <returns>Configuration entry for given entity or null if no configuration exist</returns>
+    public static TrampleEntityCfg? GetEntityCfg(Entity entity)
+    {
+        foreach (TrampleEntityCfg entityCfg in ConfigService.TrampleConfig.Entities)
+        {
+            if (WildcardUtil.Match(entityCfg.Code, entity.Code.ToString())) return entityCfg;
+        }
+        return null;
+    }
+
+    //
+
+    /// <summary>
     /// Get trample configuration for given block.
     /// </summary>
     /// <param name="api">Core server API.</param>
     /// <param name="block">Block data.</param>
     /// <param name="passable">True if we check passable block, otherwise false.</param>
     /// <returns>Trample config data for given block or null if block cannot be trampled.</returns>
-    public static TrampleBlockCfg? GetTrampleConfig(ICoreServerAPI api, Block block, bool passable)
+    public static TrampleBlockCfg? GetBlockConfig(ICoreServerAPI api, Block block, bool passable)
     {
         // Air block will never be involved in anything. And since it is most common block in the world, we can save a lot of CPU time by just skipping it without trying to find config for it.
         if (passable && block.Code.ToString() == TrampleConst.emptyBlock) return null;
 
-        if (passable) return GetTrampleConfigFromGroup(api, ConfigService.TrampleConfig.Passable, block);
-        else return GetTrampleConfigFromGroup(api, ConfigService.TrampleConfig.Impassable, block);
+        if (passable) return GetBlockConfigFromGroup(api, ConfigService.TrampleConfig.Passable, block);
+        else return GetBlockConfigFromGroup(api, ConfigService.TrampleConfig.Impassable, block);
     }
 
     /// <summary>
@@ -193,7 +226,7 @@ public class TrampleUtils
     /// <param name="trampleGroupCfg">Trample group.</param>
     /// <param name="block">Block data.</param>
     /// <returns>Trample config data for given block or null if block cannot be trampled.</returns>
-    private static TrampleBlockCfg? GetTrampleConfigFromGroup(ICoreServerAPI api, TrampleGroupCfg trampleGroupCfg, Block block)
+    private static TrampleBlockCfg? GetBlockConfigFromGroup(ICoreServerAPI api, TrampleGroupCfg trampleGroupCfg, Block block)
     {
         string currBlockCode = block.Code.ToString();
 

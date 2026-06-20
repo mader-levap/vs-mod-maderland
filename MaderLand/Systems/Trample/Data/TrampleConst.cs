@@ -31,48 +31,75 @@ public static class TrampleConst
     //
 
     /// <summary>
+    /// Default items that should contribute to trampling when worn.
+    /// </summary>
+    public static readonly List<TrampleItemCfg> DefaultItems = [
+        // specific
+        new() { Code = "game:clothes-foot-metalcap-*", Power = 0.25f, Damaged = false },
+        new() { Code = "game:armor-*-hide-*", Power = 0.15f, Damaged = false },
+        new() { Code = "game:armor-*-antique-*", Power = 0.4f, Damaged = false },
+
+        // general
+        new() { Code = "game:clothes-*-foot-*", Power = 0.1f, Damaged = false },
+        new() { Code = "game:clothes-foot-*", Power = 0.1f, Damaged = false },
+
+        new() { Code = "game:armor-*-linen", Power = 0.1f, Damaged = false },
+        new() { Code = "game:armor-*-leather", Power = 0.15f, Damaged = false },
+        new() { Code = "game:armor-*-wood", Power = 0.35f, Damaged = false },
+        new() { Code = "game:armor-*-silver", Power = 0.5f, Damaged = false },
+        new() { Code = "game:armor-*-gold", Power = 1.0f, Damaged = false },
+        new() { Code = "game:armor-*-copper", Power = 0.4f, Damaged = false },
+        new() { Code = "game:armor-*-tinbronze", Power = 0.4f, Damaged = false },
+        new() { Code = "game:armor-*-bismuthbronze", Power = 0.4f, Damaged = false },
+        new() { Code = "game:armor-*-blackbronze", Power = 0.4f, Damaged = false },
+        new() { Code = "game:armor-*-iron", Power = 0.4f, Damaged = false },
+        new() { Code = "game:armor-*-meteoriciron", Power = 0.4f, Damaged = false },
+        new() { Code = "game:armor-*-steel", Power = 0.4f, Damaged = false },
+    ];
+
+    /// <summary>
     /// Default entities that should be able to trample blocks.
     /// Besides player, all larger animals are added. Note no children trample. If bear cubs existed, they would be added next to hyenas, alas.
     /// </summary>
     public static readonly List<TrampleEntityCfg> DefaultEntities = [
         // humanoid
-        new() { EntityCode = "game:player", Power = 1, FallMul = 1 },
-        new() { EntityCode = "game:trader-*-*-*", Power = 1, FallMul = 1 },
-        new() { EntityCode = "game:villager-*-*-*-*", Power = 1, FallMul = 1 },
+        new() { Code = "game:player", Power = 1, FallMul = 1 },
+        new() { Code = "game:trader-*", Power = 1, FallMul = 1 },
+        new() { Code = "game:villager-*", Power = 1, FallMul = 1 },
 
         // specific species: largest
-        new() { EntityCode = "game:goat-muskox-adult-*", Power = 3, FallMul = 3 },
-        new() { EntityCode = "game:deer-moose-adult-*", Power = 3, FallMul = 3 },
+        new() { Code = "game:goat-muskox-adult-*", Power = 3, FallMul = 3 },
+        new() { Code = "game:deer-moose-adult-*", Power = 3, FallMul = 3 },
         
         // specific species: large
-        new() { EntityCode = "game:tameddeer-elk-adult-*", Power = 2, FallMul = 2 },
-        new() { EntityCode = "game:deer-elk-adult-*", Power = 2, FallMul = 2 },
+        new() { Code = "game:tameddeer-elk-adult-*", Power = 2, FallMul = 2 },
+        new() { Code = "game:deer-elk-adult-*", Power = 2, FallMul = 2 },
 
         // specific species: medium
-        new() { EntityCode = "game:bear-sun-adult-*", Power = 1, FallMul = 1 },
+        new() { Code = "game:bear-sun-adult-*", Power = 1, FallMul = 1 },
         
         // specific species: small
-        new() { EntityCode = "game:deer-pampas-adult-*", Power = 0.25f, FallMul = 2 },
-        new() { EntityCode = "game:deer-pudu-adult-*", Power = 0.25f, FallMul = 2 },
+        new() { Code = "game:deer-pampas-adult-*", Power = 0.25f, FallMul = 2 },
+        new() { Code = "game:deer-pudu-adult-*", Power = 0.25f, FallMul = 2 },
 
         // kinds: large
-        new() { EntityCode = "game:bear-*-adult-*", Power = 3, FallMul = 2 },
+        new() { Code = "game:bear-*-adult-*", Power = 3, FallMul = 2 },
 
         // kinds: medium
-        new() { EntityCode = "game:wolf-*-adult-*", Power = 1, FallMul = 1 },
-        new() { EntityCode = "game:pig-*-adult-*", Power = 1, FallMul = 1 },
-        new() { EntityCode = "game:sheep-*-adult-*", Power = 1, FallMul = 1 },
-        new() { EntityCode = "game:deer-*-adult-*", Power = 1, FallMul = 1 },
-        new() { EntityCode = "game:goat-*-adult-*", Power = 1, FallMul = 1 },
-        new() { EntityCode = "game:gazelle-*-adult-*", Power = 1, FallMul = 1 },
+        new() { Code = "game:wolf-*-adult-*", Power = 1, FallMul = 1 },
+        new() { Code = "game:pig-*-adult-*", Power = 1, FallMul = 1 },
+        new() { Code = "game:sheep-*-adult-*", Power = 1, FallMul = 1 },
+        new() { Code = "game:deer-*-adult-*", Power = 1, FallMul = 1 },
+        new() { Code = "game:goat-*-adult-*", Power = 1, FallMul = 1 },
+        new() { Code = "game:gazelle-*-adult-*", Power = 1, FallMul = 1 },
 
         // kinds: small (that still trample)
-        new() { EntityCode = "game:hyena-*-adult-*", Power = 0.25f, FallMul = 0.5f },
+        new() { Code = "game:hyena-*-adult-*", Power = 0.25f, FallMul = 0.5f },
 
         // rust world denizens
-        new() { EntityCode = "game:drifter-*", Power = 1, FallMul = 2 },
-        new() { EntityCode = "game:bowtorn-*", Power = 1, FallMul = 2 },
-        new() { EntityCode = "game:shiver-*", Power = 1, FallMul = 2 },
+        new() { Code = "game:drifter-*", Power = 1, FallMul = 2 },
+        new() { Code = "game:bowtorn-*", Power = 1, FallMul = 2 },
+        new() { Code = "game:shiver-*", Power = 1, FallMul = 2 },
     ];
 
     /// <summary>
@@ -136,6 +163,7 @@ public static class TrampleConst
     /// </summary>
     public static readonly TrampleCfg DefaultTrampleCfg = new()
     {
+        Items = DefaultItems,
         Entities = DefaultEntities,
         Passable = DefaultPassable,
         Impassable = DefaultImpassable,

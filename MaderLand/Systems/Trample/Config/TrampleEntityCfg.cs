@@ -8,7 +8,7 @@ public class TrampleEntityCfg
     /// <summary>
     /// Entity code. Can contain wildcards.
     /// </summary>
-    public string EntityCode { get; set; } = "";
+    public string Code { get; set; } = "";
 
     /// <summary>
     /// Base value of trampling power - how much Durability will be substracted from trampleable block during single trample event.

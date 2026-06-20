@@ -28,6 +28,11 @@ public class TrampleCfg
     public TrampleFallCfg Fall { get; set; } = new();
 
     /// <summary>
+    /// What items can impact trampling?
+    /// </summary>
+    public List<TrampleItemCfg> Items { get; set; } = [];
+
+    /// <summary>
     /// Who can trample and how?
     /// </summary>
     public List<TrampleEntityCfg> Entities { get; set; } = [];
