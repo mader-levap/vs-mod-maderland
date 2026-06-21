@@ -6,8 +6,8 @@
     "authors": [
         "Mader Levap"
     ],
-    "description": "Customization for my private world.",
-    "version": "0.0.5",
+    "description": "Customization for my worlds.",
+    "version": "0.1.0",
     "dependencies": {
         "game": "1.22.3"
     }
