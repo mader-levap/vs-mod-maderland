@@ -114,12 +114,14 @@ public class TrampleUtils
     /// <param name="blockTrampleData">Updated trample data for given block.</param>
     public static void DeltaTrampleData(ICoreServerAPI api, BlockTrampleData blockTrampleData)
     {
+        if (blockTrampleData.Regen == 0) return; // No regeneration.
+
         double CurrTime = api.World.Calendar.TotalDays;
         double PassedTime = CurrTime - blockTrampleData.UpdatedAt;
         if (PassedTime == 0) return; // No time passed, do not regenerate anything yet.
 
         blockTrampleData.UpdatedAt = CurrTime;
-        float DurRegen = blockTrampleData.MaxDurability * (float)PassedTime / blockTrampleData.Regen;
+        float DurRegen = blockTrampleData.MaxDurability * (float)PassedTime / blockTrampleData.Regen; // Regenerate durability proportionally to time.
         blockTrampleData.Durability += DurRegen;
 
         if (blockTrampleData.Durability >= blockTrampleData.MaxDurability) blockTrampleData.Durability = blockTrampleData.MaxDurability;

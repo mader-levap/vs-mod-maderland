@@ -10,7 +10,7 @@ namespace MaderLand.Systems.Trample.Services;
 /// <summary>
 /// Handle items in context of trampling.
 /// </summary>
-public class TrampleItem(ICoreServerAPI sapi)
+public class TrampleItem
 {
     /// <summary>
     /// Cache of item configurations. It also contains items without config.
@@ -46,19 +46,15 @@ public class TrampleItem(ICoreServerAPI sapi)
 
         ItemStack? itemStack = slot.Itemstack;
         if (itemStack == null) return 0;
+
         float condition = itemStack.Attributes.GetFloat("condition", 1);
         if (condition == 0) return 0; // Completely worn out items do not count.
 
         CollectibleObject? item = itemStack.Collectible;
         if (item == null) return 0;
-        //string message3 = $"[Trample] |- Found slot: item '{item.Code}' exists. Item: Condition={condition}.";
-        //sapi.Logger.Notification(message3); // DEBUG
 
         TrampleItemCfg? itemCfg = ResolveItemConfig(item);
         if (itemCfg == null) return 0;
-
-        //string message = $"[Trample] |- ITEM '{item.Code}' IS IN CONFIG. Item: Condition={condition}, Dur={item.GetRemainingDurability(itemStack)}/{item.Durability}, Power={itemCfg.Power}, Damaged={itemCfg.Damaged}.";
-        //sapi.Logger.Notification(message); // DEBUG
 
         float powerMul = itemCfg.Power;
         if (!itemCfg.Damaged) return powerMul;

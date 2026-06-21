@@ -47,7 +47,7 @@ public static class TrampleConst
         new() { Code = "game:armor-*-leather", Power = 0.15f, Damaged = false },
         new() { Code = "game:armor-*-wood", Power = 0.35f, Damaged = false },
         new() { Code = "game:armor-*-silver", Power = 0.5f, Damaged = false },
-        new() { Code = "game:armor-*-gold", Power = 1.0f, Damaged = false },
+        new() { Code = "game:armor-*-gold", Power = 1.0f, Damaged = false }, // gold is heavy!
         new() { Code = "game:armor-*-copper", Power = 0.4f, Damaged = false },
         new() { Code = "game:armor-*-tinbronze", Power = 0.4f, Damaged = false },
         new() { Code = "game:armor-*-bismuthbronze", Power = 0.4f, Damaged = false },
@@ -107,8 +107,28 @@ public static class TrampleConst
     /// </summary>
     public static readonly TrampleGroupCfg DefaultPassable = new()
     {
-        Blocks = [],
+        Blocks = new()
+        {
+            // snow
+            ["game:snowlayer-7"] = new() { ToBlockCode = "game:snowlayer-6", Durability = 15, Regen = 0.0f, DurRatio = 1.0f },
+            ["game:snowlayer-6"] = new() { ToBlockCode = "game:snowlayer-5", Durability = 15, Regen = 0.0f, DurRatio = 1.0f },
+            ["game:snowlayer-5"] = new() { ToBlockCode = "game:snowlayer-4", Durability = 15, Regen = 0.0f, DurRatio = 1.0f },
+            ["game:snowlayer-4"] = new() { ToBlockCode = "game:snowlayer-3", Durability = 15, Regen = 0.0f, DurRatio = 1.0f },
+            ["game:snowlayer-3"] = new() { ToBlockCode = "game:snowlayer-2", Durability = 15, Regen = 0.0f, DurRatio = 1.0f },
+            ["game:snowlayer-2"] = new() { ToBlockCode = "game:snowlayer-1", Durability = 15, Regen = 0.0f, DurRatio = 1.0f },
+            // special grass case
+            ["game:tallgrass-eaten-free"] = new() { ToBlockCode = "", Durability = 5, Regen = 2.0f, DurRatio = 0.5f },
+        },
         BlockVariants = [
+            // snowed passable blocks (for example grass or loose sticks) will trample into passable blocks without snow
+            new() { FromBlockCode = "game:*-snow7", ToBlockCode = "game:*-snow6", Durability = 15, Regen = 2.0f, DurRatio = 1.0f },
+            new() { FromBlockCode = "game:*-snow6", ToBlockCode = "game:*-snow5", Durability = 15, Regen = 2.0f, DurRatio = 1.0f },
+            new() { FromBlockCode = "game:*-snow5", ToBlockCode = "game:*-snow4", Durability = 15, Regen = 2.0f, DurRatio = 1.0f },
+            new() { FromBlockCode = "game:*-snow4", ToBlockCode = "game:*-snow3", Durability = 15, Regen = 2.0f, DurRatio = 1.0f },
+            new() { FromBlockCode = "game:*-snow3", ToBlockCode = "game:*-snow2", Durability = 15, Regen = 2.0f, DurRatio = 1.0f },
+            new() { FromBlockCode = "game:*-snow2", ToBlockCode = "game:*-snow", Durability = 15, Regen = 2.0f, DurRatio = 1.0f },
+            new() { FromBlockCode = "game:*-snow", ToBlockCode = "game:*-free", Durability = 15, Regen = 2.0f, DurRatio = 1.0f },
+                        
             // actual grass (not cover of soil block)
             new() { FromBlockCode = "game:tallgrass-verytall-*", ToBlockCode = "game:tallgrass-tall-*", Durability = 30, Regen = 2.0f, DurRatio = 0.5f },
             new() { FromBlockCode = "game:tallgrass-tall-*", ToBlockCode = "game:tallgrass-medium-*", Durability = 25, Regen = 2.0f, DurRatio = 0.5f },
@@ -116,11 +136,11 @@ public static class TrampleConst
             new() { FromBlockCode = "game:tallgrass-mediumshort-*", ToBlockCode = "game:tallgrass-short-*", Durability = 15, Regen = 2.0f, DurRatio = 0.5f },
             new() { FromBlockCode = "game:tallgrass-short-*", ToBlockCode = "game:tallgrass-veryshort-*", Durability = 10, Regen = 2.0f, DurRatio = 0.5f },
             new() { FromBlockCode = "game:tallgrass-veryshort-*", ToBlockCode = "game:tallgrass-eaten-*", Durability = 5, Regen = 2.0f, DurRatio = 0.5f },
-            new() { FromBlockCode = "game:tallgrass-eaten-*", ToBlockCode = "", Durability = 2.5f, Regen = 2.0f, DurRatio = 0.5f },
+
             // flowers
-            new() { FromBlockCode = "game:flower-*-*", ToBlockCode = "", Durability = 20, Regen = 1.0f, DurRatio = 0.5f },
+            new() { FromBlockCode = "game:flower-*-*", ToBlockCode = "", Durability = 35, Regen = 1.0f, DurRatio = 0.5f },
             // mushrooms
-            new() { FromBlockCode = "game:mushroom-*-*", ToBlockCode = "", Durability = 20, Regen = 1.0f, DurRatio = 0.5f },
+            new() { FromBlockCode = "game:mushroom-*-*", ToBlockCode = "", Durability = 35, Regen = 1.0f, DurRatio = 0.5f },
             // ferns
             new() { FromBlockCode = "game:fern-*", ToBlockCode = "", Durability = 35, Regen = 1.0f, DurRatio = 0.5f },
         ]

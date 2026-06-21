@@ -23,10 +23,10 @@ public class TrampleBehavior(ICoreServerAPI sapi, Block block) : BlockBehavior(b
     {
         if (!ConfigService.TrampleConfig.Active) return; // Only run behavior if the trample feature is active in the configuration.
 
-        Block block = world.BlockAccessor.GetBlock(blockPos);
-        string message = $"[Trample] Block '{block.Code}' at {blockPos} was removed. Will clean trample data.";
-        sapi.Logger.Notification(message); // DEBUG
+        // Edge case: player manually removes snow from snow-covered grass. In this case trample data should be preserved.
+        if (block.snowLevel > 0) return; // we are checking old block
 
+        // Otherwise just remove trampling data.
         TrampleUtils.RemoveTrampleData(sapi, blockPos);
     }
 }

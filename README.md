@@ -7,8 +7,8 @@ A Vintage Story personal mod that adds various features and tweaks to base game 
 All features have separate detailed documents about them in `Docs/` folder.
 
 - **Trample** — Blocks change over time when walked on, creating natural paths and trails.
-  - Fully configurable. By default, all trampling is fully reversible, but nothing stops you from adding packed earth as end result of ceaseless trampling.
-  - Any entity can trample, not just Seraphs. By default all medium and larger animals are added.
+  - Fully configurable.
+  - Any entity can trample, not just Seraphs. By default all medium and larger animals are added. Small animals and children do not trample.
   - Falling and gear will contribute to trampling.
 
 ## Other changes

@@ -19,7 +19,7 @@ public class TrampleService
     public TrampleService(ICoreServerAPI api)
     {
         sapi = api;
-        trampleItem = new(sapi);
+        trampleItem = new();
     }
 
     /// <summary>
@@ -142,7 +142,7 @@ public class TrampleService
         AssetLocation loc = new(toBlockCode);
         Block? nextBlock = sapi.World.GetBlock(loc);
         if (nextBlock == null)
-            sapi.Logger.Error($"[Trample] Failed to get block with code '{toBlockCode}' when trying to trample block '{block.Code}' at {pos}. Make sure the block code in config is correct.");
+            sapi.Logger.Error($"[Trample] Failed to get block with code '{toBlockCode}' when trying to trample block '{block.Code}' at '{pos}'. Make sure the block code in config is correct.");
 
         return nextBlock;
     }
@@ -161,12 +161,6 @@ public class TrampleService
         float BasePower = Entity.Power;
         float FallPower = entry.ImpactStrength * entry.TrampleEntityCfg.FallMul;
         float EquipmentMul = trampleItem.ResolveEquipmentMul(entry);
-
-        //if (Entity.Code == "game:player" || Entity.Code.StartsWith("game:trader"))
-        //{
-            string message = $"[Trample] Entity '{entry.Name}' trampled. ImpactStrength={entry.ImpactStrength}, FallMul={entry.TrampleEntityCfg.FallMul}. Power: base={BasePower}, fall={FallPower}, equip={EquipmentMul}.";
-            sapi.Logger.Notification(message); // DEBUG
-        //}
         return BasePower * EquipmentMul + FallPower;
     }
 }

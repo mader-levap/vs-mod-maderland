@@ -10,6 +10,17 @@ Some trampled blocks cannot change. So grass on soil will not regrow as long as 
 
 Blocks can regenerate and recover, allowing them eventually to act normally, like growing grass on soil.
 
+## Trample-able blocks
+
+By default, you can trample:
+- Snow and blocks with snow (like grass or loose sticks)
+- Standalone grass (tall)
+- Soil/peat/clay with grass on top
+- Forest floor
+- Flowers, mushrooms and ferns.
+
+What blocks are trampleable is fully configurable.
+
 ## Commands
 
 - `/ml trample active [on|off]`: Turn on/off Trample feature. You can skip `[on/off]`, will flip. If `off`, will completely disable mod, freezing state of trampling data.
